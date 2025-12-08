@@ -1,0 +1,179 @@
+{
+  "problems": [
+    {
+      "id": "url-shortener",
+      "category": "Getting Started",
+      "title": "**URL Shortener** (bit.ly/TinyURL)",
+      "description": "Design a service that generates short URLs and redirects users to the original long URLs.",
+      "statement": "Design a URL shortening service like bit.ly or TinyURL.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How users submit long URLs and receive short URLs\n- How the system handles redirection from short to long URLs\n- Your choice of database(s) and what they store\n- Any APIs or services your system exposes\n\nFocus on the core functionality first. We'll explore scalability, performance, and edge cases in follow-up questions."
+    },
+    {
+      "id": "image-sharing-service",
+      "category": "Getting Started",
+      "title": "**Image Sharing Service** (Instagram/Imgur)",
+      "description": "Design a platform where users can upload, store, and share images with metadata like captions and tags.",
+      "statement": "Design an image sharing service like Instagram or Imgur.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How users upload images to the service\n- Where and how images are stored (blob storage)\n- How users view and retrieve images\n- Your choice of database(s) for metadata (captions, tags, user info)\n- Basic API endpoints your service exposes\n\nFocus on core upload/storage/retrieval functionality. We'll explore image processing, CDNs, and scaling in follow-up questions."
+    },
+    {
+      "id": "notification-service",
+      "category": "Getting Started",
+      "title": "**Notification Service** (Twilio/OneSignal)",
+      "description": "Design a service that sends notifications to users across multiple channels like email, SMS, and push notifications.",
+      "statement": "Design a notification service like Twilio or OneSignal.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How applications request notifications to be sent\n- Support for multiple channels (email, SMS, push notifications)\n- How you route notifications to the appropriate channel\n- Your choice of database(s) and what they store\n- How you track delivery status and handle failures\n\nFocus on core notification delivery. We'll explore user preferences, templates, and scaling in follow-up questions."
+    },
+    {
+      "id": "social-media-feed",
+      "category": "Data-Intensive Systems",
+      "title": "**Social Media Feed** (BlueSky/Threads)",
+      "description": "Design a social media platform that displays personalized feeds of posts from users you follow.",
+      "statement": "Design a social media feed system like BlueSky or Threads.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How users create and publish posts\n- How users follow other users\n- How the system generates a personalized feed for each user\n- Your choice of database(s) and what they store\n- Any APIs or services your system exposes\n\nFocus on the core feed functionality. We'll explore ranking algorithms, scalability, and real-time updates in follow-up questions."
+    },
+    {
+      "id": "web-crawler",
+      "category": "Data-Intensive Systems",
+      "title": "**Web Crawler** (Googlebot/Ahrefs)",
+      "description": "Design a distributed web crawler that discovers, fetches, and indexes web pages across the internet.",
+      "statement": "Design a web crawler system like Googlebot or Ahrefs.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How the crawler discovers and queues URLs to visit\n- How pages are fetched, parsed, and processed\n- Your choice of database(s) and what they store\n- How you prevent duplicate crawling of the same URLs\n- Any politeness policies (rate limiting, robots.txt)\n\nFocus on the core crawling mechanism. We'll explore distributed crawling, scalability, and content extraction in follow-up questions."
+    },
+    {
+      "id": "real-time-analytics",
+      "category": "Data-Intensive Systems",
+      "title": "**Real-Time Analytics System** (Google Analytics/Adobe Analytics)",
+      "description": "Design a system that collects, processes, and visualizes user behavior analytics from websites and applications in real-time.",
+      "statement": "Design a real-time analytics system like Google Analytics or Adobe Analytics.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How events are collected from websites/apps and ingested into the system\n- How events are processed and aggregated\n- Your choice of database(s) and what they store\n- How users query and visualize metrics/reports\n- Real-time vs. batch processing components\n\nFocus on core analytics functionality. We'll explore scalability, data accuracy, and advanced features in follow-up questions."
+    },
+    {
+      "id": "distributed-cache",
+      "category": "Data-Intensive Systems",
+      "title": "**Distributed Cache** (Redis/Memcached)",
+      "description": "Design a high-performance distributed caching system that stores key-value pairs in memory across multiple nodes.",
+      "statement": "Design a distributed cache system like Redis or Memcached.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How clients store and retrieve key-value pairs\n- Your cache eviction policy (what happens when memory is full)\n- How data is distributed across multiple cache nodes\n- Data structures you'll support (strings, lists, sets, etc.)\n- Whether and how you'll handle persistence\n\nFocus on the core caching functionality. We'll explore replication, consistency, and failure handling in follow-up questions."
+    },
+    {
+      "id": "workflow-orchestration",
+      "category": "Data-Intensive Systems",
+      "title": "**Workflow Orchestration System** (Airflow/Temporal)",
+      "description": "Design a system that schedules and executes complex workflows with task dependencies and state management.",
+      "statement": "Design a workflow orchestration system like Airflow or Temporal.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How users define workflows and task dependencies (DAGs)\n- How tasks are scheduled and executed by workers\n- Your choice of database(s) for workflow state and metadata\n- How you handle task failures and retries\n- How users monitor workflow execution and view logs\n\nFocus on core orchestration functionality. We'll explore distributed execution, backfilling, and advanced scheduling in follow-up questions."
+    },
+    {
+      "id": "chat-application",
+      "category": "Communication and Messaging",
+      "title": "**Chat Application** (WhatsApp/Slack)",
+      "description": "Design a real-time chat application supporting one-on-one and group messaging with message history.",
+      "statement": "Design a chat application like WhatsApp or Slack.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How users send and receive messages in real-time\n- Support for one-on-one and group conversations\n- How messages are stored and retrieved (message history)\n- Your choice of database(s) and what they store\n- How you handle online/offline status\n\nFocus on core messaging functionality. We'll explore scalability, message delivery guarantees, and features like read receipts in follow-up questions."
+    },
+    {
+      "id": "video-conferencing",
+      "category": "Communication and Messaging",
+      "title": "**Video Conferencing System** (Zoom/Teams)",
+      "description": "Design a video conferencing platform that enables real-time audio and video communication between multiple participants.",
+      "statement": "Design a video conferencing system like Zoom or Microsoft Teams.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How audio and video streams are transmitted between participants\n- Your architecture for handling multi-party calls\n- How users join/create meetings\n- Your choice of database(s) and what they store\n- Whether you'll use peer-to-peer or server-based streaming\n\nFocus on core video/audio functionality. We'll explore scalability, quality optimization, and features like screen sharing in follow-up questions."
+    },
+    {
+      "id": "pubsub-messaging",
+      "category": "Communication and Messaging",
+      "title": "**Pub/Sub Messaging System** (Kafka/RabbitMQ)",
+      "description": "Design a message broker that enables asynchronous communication between publishers and subscribers using topics or queues.",
+      "statement": "Design a pub/sub messaging system like Kafka or RabbitMQ.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How publishers send messages to topics/queues\n- How subscribers consume messages from topics/queues\n- Your message storage and retention strategy\n- Your choice of database(s) or storage layer\n- How you handle message ordering and delivery guarantees\n\nFocus on core messaging functionality. We'll explore scalability, fault tolerance, and advanced patterns in follow-up questions."
+    },
+    {
+      "id": "video-streaming-platform",
+      "category": "Content Delivery",
+      "title": "**Video Streaming Platform** (Netflix/YouTube)",
+      "description": "Design a platform that allows users to upload, store, and stream video content with adaptive quality.",
+      "statement": "Design a video streaming platform like Netflix or YouTube.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How videos are uploaded and processed (encoding/transcoding)\n- Where and how video files are stored\n- How users stream videos with adaptive bitrate streaming\n- Your choice of database(s) for metadata (titles, descriptions, user data)\n- How you use CDNs for content delivery\n\nFocus on core video delivery functionality. We'll explore recommendations, live streaming, and global scale in follow-up questions."
+    },
+    {
+      "id": "live-streaming-platform",
+      "category": "Content Delivery",
+      "title": "**Live Streaming Platform** (Twitch/YouTube Live)",
+      "description": "Design a platform that enables real-time broadcasting of live video content to thousands of concurrent viewers.",
+      "statement": "Design a live streaming platform like Twitch or YouTube Live.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How streamers broadcast live video to your platform\n- How live streams are ingested, processed, and distributed\n- How viewers watch streams with low latency\n- Your choice of database(s) for metadata and chat\n- How you handle transcoding and CDN distribution\n\nFocus on core live streaming delivery. We'll explore chat systems, DVR/rewind, and scaling to millions of viewers in follow-up questions."
+    },
+    {
+      "id": "content-delivery-network",
+      "category": "Content Delivery",
+      "title": "**Content Delivery Network** (Cloudflare/Akamai)",
+      "description": "Design a globally distributed network that caches and delivers content from edge servers close to end users.",
+      "statement": "Design a content delivery network (CDN) like Cloudflare or Akamai.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How edge servers (POPs) are distributed globally\n- How content is cached at edge locations\n- How users are routed to the nearest edge server\n- Your cache invalidation/purging strategy\n- How origin servers interact with edge servers\n\nFocus on core content caching and delivery. We'll explore cache strategies, anycast routing, and advanced features in follow-up questions."
+    },
+    {
+      "id": "payment-processing",
+      "category": "Transactional Systems",
+      "title": "**Payment Processing System** (Stripe/PayPal)",
+      "description": "Design a system that processes online payments securely with support for multiple payment methods and currencies.",
+      "statement": "Design a payment processing system like Stripe or PayPal.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How payment requests are initiated and processed\n- Payment flow stages (authorization, capture, settlement)\n- Your choice of database(s) for transaction records\n- How you ensure consistency and handle failures/retries\n- Integration with external payment gateways (banks, card networks)\n\nFocus on core payment processing. We'll explore fraud detection, reconciliation, and idempotency in follow-up questions."
+    },
+    {
+      "id": "stock-trading-platform",
+      "category": "Transactional Systems",
+      "title": "**Stock Trading Platform** (Robinhood/E*TRADE)",
+      "description": "Design a platform that allows users to buy and sell stocks with real-time pricing and order execution.",
+      "statement": "Design a stock trading platform like Robinhood or E*TRADE.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How users place buy and sell orders\n- How orders are matched and executed\n- Your choice of database(s) for portfolios and transaction history\n- How you handle real-time stock price updates\n- How you ensure consistency and prevent issues like overselling\n\nFocus on core trading functionality. We'll explore order types, settlement, and high-frequency trading in follow-up questions."
+    },
+    {
+      "id": "seat-booking-system",
+      "category": "Transactional Systems",
+      "title": "**Seat Booking System** (Ticketmaster/Fandango)",
+      "description": "Design a system that allows users to search, select, and book seats for events with concurrency control.",
+      "statement": "Design a seat booking system like Ticketmaster or Fandango.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How users search for events and view available seats\n- How seat selection and reservation works (preventing double-booking)\n- Your choice of database(s) for inventory and bookings\n- How you handle concurrent booking requests with locking\n- The checkout and payment confirmation flow\n\nFocus on core booking functionality. We'll explore scalability, reservation timeouts, and waitlists in follow-up questions."
+    },
+    {
+      "id": "ecommerce-inventory",
+      "category": "Transactional Systems",
+      "title": "**E-commerce Inventory Management** (Amazon/Shopify)",
+      "description": "Design a system that tracks product inventory across warehouses and ensures accurate stock levels during orders.",
+      "statement": "Design an e-commerce inventory management system like Amazon or Shopify.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How inventory levels are tracked across multiple warehouses\n- How stock is reserved when orders are placed\n- Your choice of database(s) for inventory and orders\n- How you handle concurrent orders and prevent overselling\n- How inventory updates from restocking and returns are processed\n\nFocus on core inventory management. We'll explore warehouse selection strategies, inventory reconciliation, and reserved stock handling in follow-up questions."
+    },
+    {
+      "id": "collaborative-doc-editor",
+      "category": "Real-Time and Collaborative Systems",
+      "title": "**Collaborative Document Editor** (Google Docs/Word Online)",
+      "description": "Design a real-time collaborative document editing system supporting multiple simultaneous users.",
+      "statement": "Design a system that allows multiple users to edit the same document simultaneously with real-time updates.\n\n**Draw and describe** your high-level architecture. Consider:\n- How users see each other's changes instantly\n- How you'll handle conflicting edits\n- What happens when users have poor connectivity\n- How documents are stored and retrieved\n\nIn follow-up steps, we'll explore conflict resolution strategies, operational transformation, presence awareness, and scaling considerations. Focus on the core data flow for now."
+    },
+    {
+      "id": "multiplayer-game-server",
+      "category": "Real-Time and Collaborative Systems",
+      "title": "**Multiplayer Game Server** (Valorant/WoW)",
+      "description": "Design a low-latency multiplayer game server supporting thousands of concurrent players.",
+      "statement": "Design a system that enables thousands of players to interact in real-time with minimal lag.\n\n**Draw and describe** your high-level architecture. Consider:\n- How you'll keep player actions synchronized across clients\n- Managing game state updates with low latency\n- Handling player disconnections and reconnections\n- Supporting matchmaking and player sessions\n\nIn follow-up steps, we'll explore client-server authority models, lag compensation techniques, state reconciliation, anti-cheat mechanisms, and horizontal scaling. Start with the core gameplay loop."
+    },
+    {
+      "id": "live-collaborative-whiteboard",
+      "category": "Real-Time and Collaborative Systems",
+      "title": "**Live Collaborative Whiteboard** (Miro/Figma)",
+      "description": "Design an infinite canvas whiteboard supporting real-time collaboration with rich visual elements.",
+      "statement": "Design a system where multiple users can draw, add shapes, and collaborate on an infinite canvas in real-time.\n\n**Draw and describe** your high-level architecture. Consider:\n- How changes to objects are broadcast to all participants\n- Rendering updates efficiently across large canvases\n- Tracking cursor positions and user presence\n- Managing permissions and access control\n- Handling offline edits and synchronization\n\nIn follow-up steps, we'll explore CRDT vs OT approaches, viewport optimization, vector rendering strategies, and conflict-free merging. Focus on the collaborative update flow."
+    },
+    {
+      "id": "metrics-monitoring-system",
+      "category": "Analytics and Observability",
+      "title": "**Metrics Monitoring System** (Prometheus/Datadog)",
+      "description": "Design a time-series metrics system for monitoring application and infrastructure performance at scale.",
+      "statement": "Design a system that collects, stores, and visualizes millions of metrics per second from distributed applications.\n\n**Draw and describe** your high-level architecture. Consider:\n- How metrics are collected from thousands of hosts/services\n- Storing time-series data efficiently for fast queries\n- Querying and aggregating metrics across dimensions\n- Triggering alerts when thresholds are breached\n- Handling high ingestion rates and data retention\n\nIn follow-up steps, we'll explore time-series databases, cardinality management, downsampling strategies, pull vs push models, and distributed querying. Focus on the ingestion and query path."
+    },
+    {
+      "id": "distributed-logging-system",
+      "category": "Analytics and Observability",
+      "title": "**Distributed Logging System** (ELK/Splunk)",
+      "description": "Design a centralized logging platform for collecting, indexing, and searching logs across distributed systems.",
+      "statement": "Design a system that ingests billions of log events daily from distributed services and enables fast searching and analysis.\n\n**Draw and describe** your high-level architecture. Consider:\n- How logs flow from applications to central storage\n- Indexing structured and unstructured log data\n- Supporting fast full-text search across massive datasets\n- Managing different retention policies per log type\n- Handling burst traffic and backpressure\n\nIn follow-up steps, we'll explore log parsing pipelines, inverted indexes, sharding strategies, schema evolution, and cost optimization through tiered storage. Focus on ingestion and query paths."
+    },
+    {
+      "id": "distributed-tracing-system",
+      "category": "Analytics and Observability",
+      "title": "**Distributed Tracing System** (AWS X-Ray/Google Cloud Trace)",
+      "description": "Design a distributed tracing platform to track requests across microservices and identify performance bottlenecks.",
+      "statement": "Design a system that traces requests as they flow through dozens of microservices, capturing latency and dependencies.\n\n**Draw and describe** your high-level architecture. Consider:\n- How trace data is collected from instrumented services\n- Linking related operations across service boundaries\n- Storing and querying trace spans efficiently\n- Sampling strategies to manage data volume\n- Visualizing request paths and identifying bottlenecks\n\nIn follow-up steps, we'll explore context propagation, tail-based sampling, trace aggregation, anomaly detection, and storage optimization. Focus on the trace collection and correlation flow."
+    },
+    {
+      "id": "application-performance-monitoring",
+      "category": "Analytics and Observability",
+      "title": "**Application Performance Monitoring** (AppDynamics/DataTrace)",
+      "description": "Design an APM system that provides deep visibility into application performance and user experience.",
+      "statement": "Design a system that monitors application health, tracks user transactions, and identifies performance issues in production.\n\n**Draw and describe** your high-level architecture. Consider:\n- How you'll instrument applications to capture performance data\n- Tracking end-to-end transactions across tiers (web, app, database)\n- Detecting anomalies and performance degradation automatically\n- Correlating application metrics with infrastructure health\n- Supporting root cause analysis and code-level diagnostics\n\nIn follow-up steps, we'll explore agent instrumentation, baseline detection, dependency mapping, real user monitoring, and metric aggregation strategies. Focus on data collection and analysis paths."
+    }
+  ]
+}

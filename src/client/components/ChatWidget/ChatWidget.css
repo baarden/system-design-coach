@@ -1,0 +1,240 @@
+/* Override react-chatbot-kit default styles */
+.react-chatbot-kit-chat-container {
+  width: 100%;
+  height: 100%;
+}
+
+.react-chatbot-kit-chat-inner-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.react-chatbot-kit-chat-header {
+  display: none; /* We use our own header */
+}
+
+.react-chatbot-kit-chat-message-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background-color: #fff;
+}
+
+[data-theme="dark"] .react-chatbot-kit-chat-message-container {
+  background-color: #121212;
+}
+
+.react-chatbot-kit-chat-input-container {
+  border-top: 1px solid #e0e0e0;
+  padding: 8px;
+  flex-shrink: 0;
+  background-color: #fff;
+  position: relative;
+  z-index: 1;
+}
+
+[data-theme="dark"] .react-chatbot-kit-chat-input-container {
+  border-top-color: #424242;
+  background-color: #121212;
+}
+
+.react-chatbot-kit-chat-input {
+  border-radius: 20px;
+  border: 1px solid #e0e0e0;
+  padding: 10px 16px;
+  font-size: 14px;
+  background-color: #fff;
+  color: #333;
+}
+
+[data-theme="dark"] .react-chatbot-kit-chat-input {
+  border-color: #424242;
+  background-color: #1e1e1e;
+  color: #fff;
+}
+
+.react-chatbot-kit-chat-input:focus {
+  outline: none;
+  border-color: #1976d2;
+}
+
+[data-theme="dark"] .react-chatbot-kit-chat-input::placeholder {
+  color: #aaa;
+}
+
+.react-chatbot-kit-chat-btn-send {
+  background-color: #1976d2;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  margin-left: 8px;
+}
+
+.react-chatbot-kit-chat-btn-send:hover {
+  background-color: #1565c0;
+}
+
+/* Bot message - left aligned, full width */
+.react-chatbot-kit-chat-bot-message-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.react-chatbot-kit-chat-bot-message {
+  background: none;
+  padding: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Custom bot message wrapper with background */
+.chat-bot-message-wrapper {
+  background-color: #f5f5f5;
+  color: #333;
+  border-radius: 0 16px 16px 16px;
+  padding: 12px 16px;
+  max-width: 100%;
+  width: fit-content;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+[data-theme="dark"] .chat-bot-message-wrapper {
+  background-color: #2d2d2d;
+  color: #e0e0e0;
+}
+
+/* User message - right aligned */
+.react-chatbot-kit-user-chat-message-container {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.react-chatbot-kit-user-chat-message {
+  background-color: #1976d2;
+  color: white;
+  border-radius: 16px 16px 0 16px;
+  padding: 12px 16px;
+  max-width: 80%;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.react-chatbot-kit-chat-bot-avatar {
+  display: none;
+}
+
+.react-chatbot-kit-user-avatar {
+  display: none;
+}
+
+/* Loading dots animation */
+.chat-loading-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chat-loading-dots span {
+  width: 6px;
+  height: 6px;
+  background-color: #666;
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+[data-theme="dark"] .chat-loading-dots span {
+  background-color: #aaa;
+}
+
+.chat-loading-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.chat-loading-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.chat-loading-dots span:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+/* Markdown styles in bot messages */
+.chat-bot-message-markdown {
+  text-align: left;
+}
+
+.chat-bot-message-markdown p {
+  margin: 0 0 0.5em 0;
+}
+
+.chat-bot-message-markdown p:last-child {
+  margin-bottom: 0;
+}
+
+.chat-bot-message-markdown ul,
+.chat-bot-message-markdown ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.chat-bot-message-markdown li {
+  margin: 0.25em 0;
+}
+
+.chat-bot-message-markdown code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+[data-theme="dark"] .chat-bot-message-markdown code {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.chat-bot-message-markdown pre {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.75em;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 0.5em 0;
+}
+
+[data-theme="dark"] .chat-bot-message-markdown pre {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.chat-bot-message-markdown pre code {
+  background: none;
+  padding: 0;
+}
+
+.chat-bot-message-markdown strong {
+  font-weight: 600;
+}
+
+.chat-bot-message-markdown em {
+  font-style: italic;
+}
+
+.chat-bot-message-markdown a {
+  color: #1976d2;
+  text-decoration: underline;
+}
