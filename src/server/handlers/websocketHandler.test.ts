@@ -5,6 +5,7 @@ import type { IncomingMessage } from "http";
 import { setupWebSocketHandlers } from "./websocketHandler.js";
 import { MultiRoomStateManager } from "../managers/MultiRoomStateManager.js";
 import { MultiRoomClientManager } from "../managers/MultiRoomClientManager.js";
+import { InMemoryRoomRegistry } from "../registries/InMemoryRoomRegistry.js";
 import { FeedbackService } from "../services/FeedbackService.js";
 import { ChatService } from "../services/ChatService.js";
 import { createTestProblemRepository } from "../repositories/ProblemRepository.js";
@@ -43,8 +44,8 @@ function createMockWSS(): WebSocketServer {
 }
 
 // Mock IncomingMessage
-function createMockRequest(url: string): IncomingMessage {
-  return { url } as IncomingMessage;
+function createMockRequest(url: string, headers: Record<string, string> = {}): IncomingMessage {
+  return { url, headers } as unknown as IncomingMessage;
 }
 
 const testProblems = [
@@ -108,12 +109,14 @@ describe("websocketHandler", () => {
       problemRepository: createTestProblemRepository(testProblems),
     });
 
+    const roomRegistry = new InMemoryRoomRegistry();
     setupWebSocketHandlers({
       wss,
       stateManager,
       clientManager,
       feedbackService,
       chatService,
+      roomRegistry,
     });
   });
 
@@ -124,7 +127,7 @@ describe("websocketHandler", () => {
 
     it("adds client to manager on connection", async () => {
       const ws = createMockWebSocket();
-      const req = createMockRequest("/user123/url-shortener");
+      const req = createMockRequest("/ws/owner/user123/url-shortener");
 
       wss.emit("connection", ws, req);
       // Wait for async handler
@@ -137,20 +140,20 @@ describe("websocketHandler", () => {
       vi.spyOn(console, "error").mockImplementation(() => {});
 
       const ws = createMockWebSocket();
-      const req = createMockRequest("/");
+      const req = createMockRequest("/invalid-url", {});
 
       wss.emit("connection", ws, req);
       await new Promise((r) => setTimeout(r, 10));
 
       expect(ws.close).toHaveBeenCalledWith(
         1008,
-        "roomId path parameter is required"
+        "Invalid room URL or unauthorized"
       );
     });
 
     it("sends initial elements to new client", async () => {
       const ws = createMockWebSocket();
-      const req = createMockRequest("/user123/url-shortener");
+      const req = createMockRequest("/ws/owner/user123/url-shortener");
 
       // Add element to room
       await stateManager.setElement(
@@ -169,7 +172,7 @@ describe("websocketHandler", () => {
 
     it("sends sync status to new client", async () => {
       const ws = createMockWebSocket();
-      const req = createMockRequest("/user123/url-shortener");
+      const req = createMockRequest("/ws/owner/user123/url-shortener");
 
       wss.emit("connection", ws, req);
       await new Promise((r) => setTimeout(r, 10));
@@ -194,7 +197,7 @@ describe("websocketHandler", () => {
       });
 
       const ws = createMockWebSocket();
-      const req = createMockRequest("/user123/url-shortener");
+      const req = createMockRequest("/ws/owner/user123/url-shortener");
 
       wss.emit("connection", ws, req);
       await new Promise((r) => setTimeout(r, 10));
@@ -219,7 +222,7 @@ describe("websocketHandler", () => {
       });
 
       const ws = createMockWebSocket();
-      const req = createMockRequest("/user123/url-shortener");
+      const req = createMockRequest("/ws/owner/user123/url-shortener");
 
       wss.emit("connection", ws, req);
       await new Promise((r) => setTimeout(r, 10));
@@ -233,7 +236,7 @@ describe("websocketHandler", () => {
   describe("message handling", () => {
     it("routes get-feedback messages to FeedbackService", async () => {
       const ws = createMockWebSocket() as WebSocket & { emit: Function };
-      const req = createMockRequest("/user123/url-shortener");
+      const req = createMockRequest("/ws/owner/user123/url-shortener");
 
       vi.spyOn(feedbackService, "handleGetFeedback").mockResolvedValue();
 
@@ -260,7 +263,7 @@ describe("websocketHandler", () => {
 
     it("routes chat-message messages to ChatService", async () => {
       const ws = createMockWebSocket() as WebSocket & { emit: Function };
-      const req = createMockRequest("/user123/url-shortener");
+      const req = createMockRequest("/ws/owner/user123/url-shortener");
 
       vi.spyOn(chatService, "handleChatMessage").mockResolvedValue();
 
@@ -289,7 +292,7 @@ describe("websocketHandler", () => {
   describe("disconnection handling", () => {
     it("removes client from manager on close", async () => {
       const ws = createMockWebSocket() as WebSocket & { emit: Function };
-      const req = createMockRequest("/user123/url-shortener");
+      const req = createMockRequest("/ws/owner/user123/url-shortener");
 
       wss.emit("connection", ws, req);
       await new Promise((r) => setTimeout(r, 10));
@@ -304,7 +307,7 @@ describe("websocketHandler", () => {
       vi.spyOn(console, "error").mockImplementation(() => {});
 
       const ws = createMockWebSocket() as WebSocket & { emit: Function };
-      const req = createMockRequest("/user123/url-shortener");
+      const req = createMockRequest("/ws/owner/user123/url-shortener");
 
       wss.emit("connection", ws, req);
       await new Promise((r) => setTimeout(r, 10));

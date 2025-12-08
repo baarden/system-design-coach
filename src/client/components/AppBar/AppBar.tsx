@@ -11,27 +11,35 @@ import {
   ListItemText,
   Box,
   Switch,
+  Tooltip,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import ShareIcon from '@mui/icons-material/Share';
 import { AuthUI } from '../../providers/auth';
 import { useTheme } from '../../providers/theme';
+import { ShareDialog } from '../ShareDialog';
 
 interface AppBarProps {
   title?: string;
   isConnected?: boolean;
   position?: 'fixed' | 'static';
+  roomId?: string | null;
+  isOwner?: boolean;
 }
 
 export function AppBar({
   title = 'System Design Coach',
   isConnected,
   position = 'static',
+  roomId,
+  isOwner = false,
 }: AppBarProps) {
   const navigate = useNavigate();
   const { mode, toggleTheme } = useTheme();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const menuOpen = Boolean(anchorEl);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -92,6 +100,17 @@ export function AppBar({
           {title}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {isOwner && roomId && (
+            <Tooltip title="Share room">
+              <IconButton
+                color="inherit"
+                onClick={() => setShareOpen(true)}
+                aria-label="Share room"
+              >
+                <ShareIcon />
+              </IconButton>
+            </Tooltip>
+          )}
           {isConnected !== undefined && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Box
@@ -110,6 +129,14 @@ export function AppBar({
           <AuthUI />
         </Box>
       </Toolbar>
+
+      {roomId && (
+        <ShareDialog
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          roomId={roomId}
+        />
+      )}
     </MuiAppBar>
   );
 }

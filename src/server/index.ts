@@ -14,9 +14,14 @@ import type { AsyncStateManager } from "./managers/types.js";
 import { MultiRoomStateManager } from "./managers/MultiRoomStateManager.js";
 import { RedisStateManager } from "./managers/RedisStateManager.js";
 import { MultiRoomClientManager } from "./managers/MultiRoomClientManager.js";
+import type { RoomRegistry } from "./registries/types.js";
+import { InMemoryRoomRegistry } from "./registries/InMemoryRoomRegistry.js";
+import { RedisRoomRegistry } from "./registries/RedisRoomRegistry.js";
 import { registerAuthRoutes } from "./routes/index.js";
 import { createElementRoutes } from "./routes/elementRoutes.js";
 import { createProblemRoutes } from "./routes/problemRoutes.js";
+import { createRoomRoutes } from "./routes/roomRoutes.js";
+import { authMiddleware } from "./middleware/authMiddleware.js";
 import { FeedbackService } from "./services/FeedbackService.js";
 import { ChatService } from "./services/ChatService.js";
 import { AnthropicAdapter } from "./services/ai/AnthropicAdapter.js";
@@ -40,17 +45,20 @@ const wss = new WebSocketServer({
   },
 });
 
-// Initialize state manager (Redis or in-memory)
+// Initialize state manager and room registry (Redis or in-memory)
 let stateManager: AsyncStateManager;
+let roomRegistry: RoomRegistry;
 if (config.redis.url) {
   const redisClient = createRedisClient({
     url: config.redis.url,
     keyPrefix: config.redis.keyPrefix,
   });
   stateManager = new RedisStateManager(redisClient);
+  roomRegistry = new RedisRoomRegistry(redisClient);
   console.log(`[Server] Using Redis state manager: ${config.redis.url}`);
 } else {
   stateManager = new MultiRoomStateManager(100);
+  roomRegistry = new InMemoryRoomRegistry(100);
   console.log("[Server] Using in-memory state manager");
 }
 
@@ -93,6 +101,14 @@ await registerAuthRoutes(app, clientManager);
 // JSON parser for all other routes
 app.use(express.json());
 
+// Auth middleware - extracts userId from request
+app.use(authMiddleware);
+
+// Helper function for constructing share URLs
+const getBaseUrl = (): string => {
+  return process.env.BASE_URL || `http://${config.host}:${config.port}`;
+};
+
 // Health check endpoint
 app.get("/api/health", async (req: Request, res: Response) => {
   const roomCount = await stateManager.getRoomCount();
@@ -113,8 +129,11 @@ app.use(createElementRoutes({ stateManager, clientManager }));
 // Register problem routes
 app.use("/api/problems", createProblemRoutes());
 
+// Register room routes
+app.use(createRoomRoutes({ roomRegistry, getBaseUrl }));
+
 // Setup WebSocket handlers
-setupWebSocketHandlers({ wss, stateManager, clientManager, feedbackService, chatService });
+setupWebSocketHandlers({ wss, stateManager, clientManager, feedbackService, chatService, roomRegistry });
 
 // Serve static files in production
 if (process.env.NODE_ENV === "production") {

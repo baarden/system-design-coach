@@ -23,9 +23,21 @@ import { fetchProblem, getServerUrl } from "./api";
 interface DesignPageProps {
   title?: string;
   claudeFeedback?: string;
+  /** Guest mode - uses token-based access instead of owner access */
+  guestMode?: boolean;
+  /** Share token for guest access */
+  guestToken?: string;
+  /** Override the roomId (used when guest mode resolves token to room) */
+  overrideRoomId?: string;
 }
 
-function DesignPage({ title = "System Design Coach", claudeFeedback = "" }: DesignPageProps) {
+function DesignPage({
+  title = "System Design Coach",
+  claudeFeedback = "",
+  guestMode = false,
+  guestToken,
+  overrideRoomId,
+}: DesignPageProps) {
   const { user, questionId } = useParams<{
     user: string;
     questionId: string;
@@ -79,9 +91,17 @@ function DesignPage({ title = "System Design Coach", claudeFeedback = "" }: Desi
   const feedbackScrollRef = useRef<HTMLDivElement>(null);
   const problemScrollRef = useRef<HTMLDivElement>(null);
 
-  // Construct roomId from URL params
-  const roomId = user && questionId ? `${user}/${questionId}` : null;
-  const effectiveUserId = userId ?? "default-user";
+  // Construct roomId from URL params or override (guest mode)
+  const roomId = overrideRoomId || (user && questionId ? `${user}/${questionId}` : null);
+  const problemIdFromRoom = roomId?.split('/')[1] ?? questionId;
+  const effectiveUserId = userId ?? user ?? "default-user";
+  // Owner if accessing via owner route (not guest mode)
+  const isOwner = !guestMode;
+
+  // Construct WebSocket path based on access mode
+  const wsPath = guestMode && guestToken
+    ? `/ws/guest/${guestToken}`
+    : roomId ? `/ws/owner/${roomId}` : null;
 
   // Demo image loader
   const { loadDemoImageIfEmpty } = useDemoImage();
@@ -144,9 +164,10 @@ function DesignPage({ title = "System Design Coach", claudeFeedback = "" }: Desi
 
   // Fetch problem statement on mount
   useEffect(() => {
-    if (!questionId) return;
+    const problemId = problemIdFromRoom;
+    if (!problemId) return;
 
-    fetchProblem(questionId)
+    fetchProblem(problemId)
       .then((data) => {
         if (data.success && data.problem) {
           setProblemStatement(data.problem.statement);
@@ -155,7 +176,7 @@ function DesignPage({ title = "System Design Coach", claudeFeedback = "" }: Desi
       .catch((error) => {
         console.error("Error fetching problem:", error);
       });
-  }, [questionId]);
+  }, [problemIdFromRoom]);
 
   // Don't render until we have valid roomId
   if (!roomId) {
@@ -291,7 +312,7 @@ function DesignPage({ title = "System Design Coach", claudeFeedback = "" }: Desi
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
-      <AppBar title={title} isConnected={isConnected} />
+      <AppBar title={title} isConnected={isConnected} roomId={roomId} isOwner={isOwner} />
 
       {/* Main Content */}
       <Box
@@ -341,6 +362,7 @@ function DesignPage({ title = "System Design Coach", claudeFeedback = "" }: Desi
           <ExcalidrawClient
             serverUrl={getServerUrl()}
             roomId={roomId}
+            wsPath={wsPath ?? undefined}
             theme={mode}
             onConnect={() => setIsConnected(true)}
             onDisconnect={() => setIsConnected(false)}

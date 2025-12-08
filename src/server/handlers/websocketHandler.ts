@@ -6,6 +6,7 @@ import type {
   SyncStatusMessage,
 } from "../../shared/types/excalidraw.js";
 import type { AsyncStateManager } from "../managers/types.js";
+import type { RoomRegistry } from "../registries/types.js";
 import { MultiRoomClientManager } from "../managers/MultiRoomClientManager.js";
 import { FeedbackService } from "../services/FeedbackService.js";
 import { ChatService } from "../services/ChatService.js";
@@ -17,20 +18,66 @@ interface WebSocketHandlerDependencies {
   clientManager: MultiRoomClientManager;
   feedbackService: FeedbackService;
   chatService: ChatService;
+  roomRegistry: RoomRegistry;
+}
+
+type AccessMode = 'owner' | 'guest';
+
+interface ParsedConnection {
+  roomId: string;
+  accessMode: AccessMode;
+}
+
+async function parseWebSocketUrl(
+  url: string,
+  roomRegistry: RoomRegistry
+): Promise<ParsedConnection | null> {
+  const cleanUrl = url.replace(/^\//, '');
+
+  // Pattern: ws/owner/:user/:problemId
+  const ownerMatch = cleanUrl.match(/^ws\/owner\/([^/]+)\/([^/]+)$/);
+  if (ownerMatch) {
+    const [, user, problemId] = ownerMatch;
+    const roomId = `${user}/${problemId}`;
+
+    // User is identified by URL path - create room if needed
+    let metadata = await roomRegistry.getRoomMetadata(roomId);
+    if (!metadata) {
+      metadata = await roomRegistry.createRoom(user, problemId);
+    }
+
+    return { roomId, accessMode: 'owner' };
+  }
+
+  // Pattern: ws/guest/:token
+  const guestMatch = cleanUrl.match(/^ws\/guest\/([^/]+)$/);
+  if (guestMatch) {
+    const [, token] = guestMatch;
+    const metadata = await roomRegistry.getRoomByToken(token);
+    if (!metadata) {
+      return null;
+    }
+    return { roomId: metadata.roomId, accessMode: 'guest' };
+  }
+
+  return null;
 }
 
 export function setupWebSocketHandlers(deps: WebSocketHandlerDependencies): void {
-  const { wss, stateManager, clientManager, feedbackService, chatService } = deps;
+  const { wss, stateManager, clientManager, feedbackService, chatService, roomRegistry } = deps;
 
   wss.on("connection", async (ws: WebSocket, req: IncomingMessage) => {
-    // Extract roomId from path parameter
-    const roomId = req.url?.replace(/^\//, "") || "";
+    const parsed = await parseWebSocketUrl(req.url || '', roomRegistry);
 
-    if (!roomId) {
-      console.error("WebSocket connection rejected: missing roomId");
-      ws.close(1008, "roomId path parameter is required");
+    if (!parsed) {
+      console.error("WebSocket connection rejected: invalid URL or unauthorized");
+      ws.close(1008, "Invalid room URL or unauthorized");
       return;
     }
+
+    const { roomId, accessMode } = parsed;
+    (ws as any).accessMode = accessMode;
+    (ws as any).roomId = roomId;
 
     clientManager.addClient(ws, roomId);
 

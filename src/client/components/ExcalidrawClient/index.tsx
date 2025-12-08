@@ -42,6 +42,8 @@ interface ApiResponse {
 export interface ExcalidrawClientProps {
   serverUrl?: string;
   roomId?: string;
+  /** Custom WebSocket path. If provided, overrides the default /${roomId} path. */
+  wsPath?: string;
   theme?: "light" | "dark";
   onConnect?: () => void;
   onDisconnect?: () => void;
@@ -139,6 +141,7 @@ export function ExcalidrawClient(
     props.serverUrl ||
     (typeof window !== "undefined" ? window.location.origin : "");
   const roomIdPath = props.roomId ? `/${props.roomId}` : "";
+  const wsPath = props.wsPath ?? roomIdPath;
 
   const send = (message: unknown): void => {
     if (websocketRef.current?.readyState === WebSocket.OPEN) {
@@ -293,7 +296,7 @@ export function ExcalidrawClient(
 
     const protocol = baseUrl.startsWith("https") ? "wss:" : "ws:";
     const wsBaseUrl = baseUrl.replace(/^https?:/, protocol);
-    const wsUrl = `${wsBaseUrl}${roomIdPath}`;
+    const wsUrl = `${wsBaseUrl}${wsPath}`;
 
     websocketRef.current = new WebSocket(wsUrl);
 

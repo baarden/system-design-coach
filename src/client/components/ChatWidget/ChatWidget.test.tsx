@@ -29,6 +29,7 @@ describe("ChatWidget", () => {
   const mockSendMessage = vi.fn();
   const mockOnNeedsCredits = vi.fn();
   const mockOnMessageConsumed = vi.fn();
+  const mockOnUnavailable = vi.fn();
 
   const defaultProps = {
     sendMessage: mockSendMessage,
@@ -36,6 +37,7 @@ describe("ChatWidget", () => {
     onNeedsCredits: mockOnNeedsCredits,
     incomingMessage: null,
     onMessageConsumed: mockOnMessageConsumed,
+    onUnavailable: mockOnUnavailable,
   };
 
   beforeEach(() => {

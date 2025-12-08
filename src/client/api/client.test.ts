@@ -16,9 +16,9 @@ describe("API Client", () => {
       }
     });
 
-    it("returns default URL when env var is not set", () => {
+    it("returns empty string (same-origin) when env var is not set", () => {
       delete import.meta.env.VITE_SERVER_URL;
-      expect(getServerUrl()).toBe("http://127.0.0.1:3001");
+      expect(getServerUrl()).toBe("");
     });
 
     it("returns env var URL when set", () => {
