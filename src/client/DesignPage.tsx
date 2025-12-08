@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Navigate } from "react-router-dom";
 import { ExcalidrawClient } from "./components/ExcalidrawClient";
 import { useAuth } from "./providers/auth";
 import { ChatWidget } from "./components/ChatWidget";
@@ -42,7 +42,27 @@ function DesignPage({
     user: string;
     questionId: string;
   }>();
-  const { userId, reloadUser, onUnavailable } = useAuth();
+  const { userId, isLoaded, isSignedIn, reloadUser, onUnavailable } = useAuth();
+
+  // Auth checks for owner routes (not guest mode)
+  if (!guestMode) {
+    // Redirect to home if not signed in
+    if (isLoaded && !isSignedIn) {
+      return <Navigate to="/" replace />;
+    }
+
+    // Block access if URL user doesn't match authenticated user
+    // In NoopAuth mode, userId is "default-user", so only /default-user/* URLs work
+    if (isLoaded && isSignedIn && user && userId !== user) {
+      return (
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Alert severity="error">
+            You don't have permission to access this room.
+          </Alert>
+        </Box>
+      );
+    }
+  }
   const { mode } = useTheme();
 
   // UI state
@@ -94,7 +114,9 @@ function DesignPage({
   // Construct roomId from URL params or override (guest mode)
   const roomId = overrideRoomId || (user && questionId ? `${user}/${questionId}` : null);
   const problemIdFromRoom = roomId?.split('/')[1] ?? questionId;
-  const effectiveUserId = userId ?? user ?? "default-user";
+  // Auth checks above ensure we're signed in with a valid userId that matches URL user.
+  // NoopAuthProvider returns "default-user"; real auth returns the actual user ID.
+  const effectiveUserId = userId!;
   // Owner if accessing via owner route (not guest mode)
   const isOwner = !guestMode;
 
@@ -510,7 +532,7 @@ function DesignPage({
       {isApiReady && isOwner && (
         <ChatWidget
           sendMessage={(message) => excalidrawApiRef.current?.send(message)}
-          userId={userId ?? "default-user"}
+          userId={effectiveUserId}
           onUnavailable={onUnavailable}
           incomingMessage={incomingChatMessage as Parameters<typeof ChatWidget>[0]["incomingMessage"]}
           onMessageConsumed={() => setIncomingChatMessage(null)}

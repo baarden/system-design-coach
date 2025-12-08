@@ -51,8 +51,7 @@ function LandingPage() {
       return;
     }
 
-    const effectiveUserId = userId ?? 'default-user';
-    navigate(`/${effectiveUserId}/${problemId}`);
+    navigate(`/${userId}/${problemId}`);
   };
 
   return (
