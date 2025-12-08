@@ -474,11 +474,11 @@ function DesignPage({
           </Box>
         </Box>
 
-        {/* Get Feedback Button */}
+        {/* Get Feedback Button - disabled for guests */}
         <Button
           variant="contained"
           onClick={handleGetFeedback}
-          disabled={isFeedbackLoading}
+          disabled={isFeedbackLoading || !isOwner}
           startIcon={
             isFeedbackLoading ? (
               <CircularProgress size={20} color="inherit" />
@@ -506,8 +506,8 @@ function DesignPage({
         </Alert>
       </Snackbar>
 
-      {/* Chat Widget */}
-      {isApiReady && (
+      {/* Chat Widget - only shown to room owner */}
+      {isApiReady && isOwner && (
         <ChatWidget
           sendMessage={(message) => excalidrawApiRef.current?.send(message)}
           userId={userId ?? "default-user"}

@@ -257,7 +257,8 @@ describe("websocketHandler", () => {
       expect(feedbackService.handleGetFeedback).toHaveBeenCalledWith(
         ws,
         "user123/url-shortener",
-        expect.objectContaining({ type: "get-feedback" })
+        expect.objectContaining({ type: "get-feedback" }),
+        "user123"
       );
     });
 
@@ -284,7 +285,8 @@ describe("websocketHandler", () => {
       expect(chatService.handleChatMessage).toHaveBeenCalledWith(
         ws,
         "user123/url-shortener",
-        expect.objectContaining({ type: "chat-message" })
+        expect.objectContaining({ type: "chat-message" }),
+        "user123"
       );
     });
   });

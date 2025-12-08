@@ -26,6 +26,7 @@ type AccessMode = 'owner' | 'guest';
 interface ParsedConnection {
   roomId: string;
   accessMode: AccessMode;
+  userId: string | null;
 }
 
 async function parseWebSocketUrl(
@@ -46,7 +47,7 @@ async function parseWebSocketUrl(
       metadata = await roomRegistry.createRoom(user, problemId);
     }
 
-    return { roomId, accessMode: 'owner' };
+    return { roomId, accessMode: 'owner', userId: user };
   }
 
   // Pattern: ws/guest/:token
@@ -57,7 +58,7 @@ async function parseWebSocketUrl(
     if (!metadata) {
       return null;
     }
-    return { roomId: metadata.roomId, accessMode: 'guest' };
+    return { roomId: metadata.roomId, accessMode: 'guest', userId: null };
   }
 
   return null;
@@ -75,9 +76,10 @@ export function setupWebSocketHandlers(deps: WebSocketHandlerDependencies): void
       return;
     }
 
-    const { roomId, accessMode } = parsed;
+    const { roomId, accessMode, userId } = parsed;
     (ws as any).accessMode = accessMode;
     (ws as any).roomId = roomId;
+    (ws as any).userId = userId;
 
     clientManager.addClient(ws, roomId);
 
@@ -159,11 +161,19 @@ export function setupWebSocketHandlers(deps: WebSocketHandlerDependencies): void
         const data: IncomingWebSocketMessage = JSON.parse(message.toString());
 
         if (data.type === "get-feedback") {
-          feedbackService.handleGetFeedback(ws, roomId, data).catch((error) => {
+          if (accessMode === 'guest') {
+            ws.send(JSON.stringify({ type: "status", eventId: data.eventId, status: "error", message: "Guests cannot request feedback" }));
+            return;
+          }
+          feedbackService.handleGetFeedback(ws, roomId, data, userId!).catch((error) => {
             console.error(`[WebSocket] Unhandled error in feedbackService for room ${roomId}:`, error);
           });
         } else if (data.type === "chat-message") {
-          chatService.handleChatMessage(ws, roomId, data).catch((error) => {
+          if (accessMode === 'guest') {
+            ws.send(JSON.stringify({ type: "status", eventId: data.eventId, status: "error", message: "Guests cannot send chat messages" }));
+            return;
+          }
+          chatService.handleChatMessage(ws, roomId, data, userId!).catch((error) => {
             console.error(`[WebSocket] Unhandled error in chatService for room ${roomId}:`, error);
           });
         }

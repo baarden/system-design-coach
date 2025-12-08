@@ -77,7 +77,7 @@ describe("ChatService", () => {
     };
 
     it("sends chat response to client", async () => {
-      await service.handleChatMessage(ws, roomId, chatMessage);
+      await service.handleChatMessage(ws, roomId, chatMessage, "user123");
 
       expect(ws.send).toHaveBeenCalledWith(
         expect.stringContaining('"type":"chat-response"')
@@ -88,7 +88,7 @@ describe("ChatService", () => {
     });
 
     it("sends completed status to client", async () => {
-      await service.handleChatMessage(ws, roomId, chatMessage);
+      await service.handleChatMessage(ws, roomId, chatMessage, "user123");
 
       expect(ws.send).toHaveBeenCalledWith(
         JSON.stringify({
@@ -100,7 +100,7 @@ describe("ChatService", () => {
     });
 
     it("records token usage", async () => {
-      await service.handleChatMessage(ws, roomId, chatMessage);
+      await service.handleChatMessage(ws, roomId, chatMessage, "user123");
 
       expect(usageProvider.recordUsage).toHaveBeenCalledWith("user123", {
         inputTokens: 50,
@@ -109,7 +109,7 @@ describe("ChatService", () => {
     });
 
     it("initializes conversation if not exists", async () => {
-      await service.handleChatMessage(ws, roomId, chatMessage);
+      await service.handleChatMessage(ws, roomId, chatMessage, "user123");
 
       const conversation = await stateManager.getConversation(roomId);
       expect(conversation).toBeDefined();
@@ -117,7 +117,7 @@ describe("ChatService", () => {
     });
 
     it("stores user and assistant messages with chat source", async () => {
-      await service.handleChatMessage(ws, roomId, chatMessage);
+      await service.handleChatMessage(ws, roomId, chatMessage, "user123");
 
       const conversation = await stateManager.getConversation(roomId);
       const chatMessages = conversation?.messages.filter(
@@ -135,7 +135,7 @@ describe("ChatService", () => {
         message: "   ",
       };
 
-      await service.handleChatMessage(ws, roomId, emptyMessage);
+      await service.handleChatMessage(ws, roomId, emptyMessage, "user123");
 
       expect(ws.send).toHaveBeenCalledWith(
         JSON.stringify({
@@ -157,7 +157,7 @@ describe("ChatService", () => {
         problemRepository: createTestProblemRepository(testProblems),
       });
 
-      await service.handleChatMessage(ws, roomId, chatMessage);
+      await service.handleChatMessage(ws, roomId, chatMessage, "user123");
 
       expect(ws.send).toHaveBeenCalledWith(
         JSON.stringify({
@@ -174,7 +174,7 @@ describe("ChatService", () => {
     it("sends error status for unknown problem", async () => {
       vi.spyOn(console, "error").mockImplementation(() => {});
 
-      await service.handleChatMessage(ws, "user123/unknown-problem", chatMessage);
+      await service.handleChatMessage(ws, "user123/unknown-problem", chatMessage, "user123");
 
       expect(ws.send).toHaveBeenCalledWith(
         expect.stringContaining('"status":"error"')
@@ -194,7 +194,7 @@ describe("ChatService", () => {
         problemRepository: createTestProblemRepository(testProblems),
       });
 
-      await service.handleChatMessage(ws, roomId, chatMessage);
+      await service.handleChatMessage(ws, roomId, chatMessage, "user123");
 
       expect(ws.send).toHaveBeenCalledWith(
         JSON.stringify({
@@ -226,7 +226,7 @@ describe("ChatService", () => {
         source: "chat",
       });
 
-      await service.handleChatMessage(ws, roomId, chatMessage);
+      await service.handleChatMessage(ws, roomId, chatMessage, "user123");
 
       expect(aiClient.createMessage).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -253,7 +253,7 @@ describe("ChatService", () => {
         source: "feedback",
       });
 
-      await service.handleChatMessage(ws, roomId, chatMessage);
+      await service.handleChatMessage(ws, roomId, chatMessage, "user123");
 
       // Verify empty message was filtered
       const call = (aiClient.createMessage as any).mock.calls[0][0];
@@ -279,7 +279,7 @@ describe("ChatService", () => {
         problemRepository: createTestProblemRepository(testProblems),
       });
 
-      await service.handleChatMessage(ws, roomId, chatMessage);
+      await service.handleChatMessage(ws, roomId, chatMessage, "user123");
 
       expect(ws.send).toHaveBeenCalledWith(
         expect.stringContaining("Expected text response")

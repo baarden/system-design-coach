@@ -39,7 +39,8 @@ export class ChatService {
   async handleChatMessage(
     ws: WebSocket,
     roomId: string,
-    data: ChatMessage
+    data: ChatMessage,
+    userId: string
   ): Promise<void> {
     try {
       // Validate message is not empty
@@ -56,7 +57,7 @@ export class ChatService {
 
       // Check if user can perform this action
       const unavailableReason = await this.usageProvider.checkAvailability(
-        data.userId
+        userId
       );
       if (unavailableReason) {
         const unavailableMessage: StatusMessage = {
@@ -117,7 +118,7 @@ export class ChatService {
         messages: messagesForClaude,
       });
 
-      await this.usageProvider.recordUsage(data.userId, {
+      await this.usageProvider.recordUsage(userId, {
         inputTokens: response.usage.inputTokens,
         outputTokens: response.usage.outputTokens,
       });

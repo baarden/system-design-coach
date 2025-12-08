@@ -101,7 +101,7 @@ describe("FeedbackService", () => {
     };
 
     it("sends feedback response to clients via broadcaster", async () => {
-      await service.handleGetFeedback(ws, roomId, feedbackMessage);
+      await service.handleGetFeedback(ws, roomId, feedbackMessage, "user123");
 
       expect(broadcaster.broadcast).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -113,7 +113,7 @@ describe("FeedbackService", () => {
     });
 
     it("sends next prompt when provided", async () => {
-      await service.handleGetFeedback(ws, roomId, feedbackMessage);
+      await service.handleGetFeedback(ws, roomId, feedbackMessage, "user123");
 
       expect(broadcaster.broadcast).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -125,7 +125,7 @@ describe("FeedbackService", () => {
     });
 
     it("sends completed status to requesting client", async () => {
-      await service.handleGetFeedback(ws, roomId, feedbackMessage);
+      await service.handleGetFeedback(ws, roomId, feedbackMessage, "user123");
 
       expect(ws.send).toHaveBeenCalledWith(
         JSON.stringify({
@@ -137,7 +137,7 @@ describe("FeedbackService", () => {
     });
 
     it("records token usage", async () => {
-      await service.handleGetFeedback(ws, roomId, feedbackMessage);
+      await service.handleGetFeedback(ws, roomId, feedbackMessage, "user123");
 
       expect(usageProvider.recordUsage).toHaveBeenCalledWith("user123", {
         inputTokens: 100,
@@ -146,7 +146,7 @@ describe("FeedbackService", () => {
     });
 
     it("initializes conversation if not exists", async () => {
-      await service.handleGetFeedback(ws, roomId, feedbackMessage);
+      await service.handleGetFeedback(ws, roomId, feedbackMessage, "user123");
 
       const conversation = await stateManager.getConversation(roomId);
       expect(conversation).toBeDefined();
@@ -154,7 +154,7 @@ describe("FeedbackService", () => {
     });
 
     it("stores user and assistant messages in conversation", async () => {
-      await service.handleGetFeedback(ws, roomId, feedbackMessage);
+      await service.handleGetFeedback(ws, roomId, feedbackMessage, "user123");
 
       const conversation = await stateManager.getConversation(roomId);
       // Initial message + user message + assistant response
@@ -176,7 +176,7 @@ describe("FeedbackService", () => {
         problemRepository: createTestProblemRepository(testProblems),
       });
 
-      await service.handleGetFeedback(ws, roomId, feedbackMessage);
+      await service.handleGetFeedback(ws, roomId, feedbackMessage, "user123");
 
       expect(ws.send).toHaveBeenCalledWith(
         JSON.stringify({
@@ -192,7 +192,7 @@ describe("FeedbackService", () => {
     it("sends error status for unknown problem", async () => {
       vi.spyOn(console, "error").mockImplementation(() => {});
 
-      await service.handleGetFeedback(ws, "user123/unknown-problem", feedbackMessage);
+      await service.handleGetFeedback(ws, "user123/unknown-problem", feedbackMessage, "user123");
 
       expect(ws.send).toHaveBeenCalledWith(
         expect.stringContaining('"status":"error"')
@@ -213,7 +213,7 @@ describe("FeedbackService", () => {
         problemRepository: createTestProblemRepository(testProblems),
       });
 
-      await service.handleGetFeedback(ws, roomId, feedbackMessage);
+      await service.handleGetFeedback(ws, roomId, feedbackMessage, "user123");
 
       expect(ws.send).toHaveBeenCalledWith(
         JSON.stringify({
@@ -239,7 +239,7 @@ describe("FeedbackService", () => {
         problemRepository: createTestProblemRepository(testProblems),
       });
 
-      await service.handleGetFeedback(ws, roomId, feedbackMessage);
+      await service.handleGetFeedback(ws, roomId, feedbackMessage, "user123");
 
       expect(ws.send).toHaveBeenCalledWith(
         expect.stringContaining("Expected tool use response")
@@ -282,7 +282,7 @@ describe("FeedbackService", () => {
         problemRepository: createTestProblemRepository(testProblems),
       });
 
-      await service.handleGetFeedback(ws, roomId, feedbackMessage);
+      await service.handleGetFeedback(ws, roomId, feedbackMessage, "user123");
 
       expect(broadcaster.broadcast).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -310,7 +310,7 @@ describe("FeedbackService", () => {
         roomId
       );
 
-      await service.handleGetFeedback(ws, roomId, feedbackMessage);
+      await service.handleGetFeedback(ws, roomId, feedbackMessage, "user123");
 
       // Check that AI client was called with message containing patch
       expect(aiClient.createMessage).toHaveBeenCalledWith(

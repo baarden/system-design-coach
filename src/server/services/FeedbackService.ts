@@ -52,12 +52,13 @@ export class FeedbackService {
   async handleGetFeedback(
     ws: WebSocket,
     roomId: string,
-    data: GetFeedbackMessage
+    data: GetFeedbackMessage,
+    userId: string
   ): Promise<void> {
     try {
       // Check if user can perform this action
       const unavailableReason = await this.usageProvider.checkAvailability(
-        data.userId
+        userId
       );
       if (unavailableReason) {
         const unavailableMessage: StatusMessage = {
@@ -178,7 +179,7 @@ export class FeedbackService {
         messages: messagesForClaude,
       });
 
-      await this.usageProvider.recordUsage(data.userId, {
+      await this.usageProvider.recordUsage(userId, {
         inputTokens: response.usage.inputTokens,
         outputTokens: response.usage.outputTokens,
       });
