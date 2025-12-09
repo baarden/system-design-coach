@@ -3,13 +3,15 @@
  * Thanks to mcp-excalidraw (https://github.com/anthropics/mcp-excalidraw) for the original implementation.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Excalidraw,
   convertToExcalidrawElements,
   CaptureUpdateAction,
 } from "@excalidraw/excalidraw";
+import type * as Y from "yjs";
 import type { ServerElement, ExcalidrawMessage } from "@shared/types/excalidraw";
+import { useYjsElements } from "../../hooks/useYjsElements";
 
 // Local type definitions for Excalidraw types that aren't cleanly exported
 interface ExcalidrawElement {
@@ -64,6 +66,10 @@ export interface ExcalidrawClientProps {
     elements?: ExcalidrawElement[];
     appState?: Record<string, unknown>;
   };
+  /** Optional Yjs Y.Array for collaborative element sync. When provided, enables real-time collaboration. */
+  yElements?: Y.Array<unknown> | null;
+  /** Throttle Yjs sync updates in milliseconds. Higher = fewer updates, less real-time. Default: 100ms. Set to 0 for no throttling. */
+  yjsThrottleMs?: number;
 }
 
 // Helper function to clean elements for Excalidraw
@@ -83,10 +89,20 @@ const cleanElementForExcalidraw = (
 };
 
 // Helper function to validate and fix element binding data
+// existingElements: elements already in the scene (for validating bindings during remote sync)
 const validateAndFixBindings = (
-  elements: Partial<ExcalidrawElement>[]
+  elements: Partial<ExcalidrawElement>[],
+  existingElements?: readonly ExcalidrawElement[]
 ): Partial<ExcalidrawElement>[] => {
+  // Build a map of all known elements (incoming + existing)
   const elementMap = new Map(elements.map((el) => [el.id!, el]));
+  if (existingElements) {
+    for (const el of existingElements) {
+      if (!elementMap.has(el.id)) {
+        elementMap.set(el.id, el);
+      }
+    }
+  }
 
   return elements.map((element) => {
     const fixedElement = { ...element };
@@ -134,8 +150,58 @@ export function ExcalidrawClient(
   const excalidrawAPIRef = useRef<ExcalidrawImperativeAPI | null>(null);
   const mountedRef = useRef(true);
   const readyFiredRef = useRef(false);
+  // Track if we're applying remote Yjs changes to avoid loops
+  const isApplyingRemoteRef = useRef(false);
 
   excalidrawAPIRef.current = excalidrawAPI;
+
+  // Handle remote Yjs element changes
+  const handleRemoteYjsChange = useCallback(
+    (elements: ExcalidrawElement[]) => {
+      if (!excalidrawAPIRef.current) return;
+
+      isApplyingRemoteRef.current = true;
+      try {
+        // For Yjs-synced elements, trust the Y.Doc data without stripping bindings.
+        // Y.Doc maintains consistency through CRDTs, so bindings should be valid.
+        // Only clean server-specific metadata properties.
+        const cleanedElements = elements.map((el) =>
+          cleanElementForExcalidraw(el as unknown as ServerElement)
+        );
+        excalidrawAPIRef.current.updateScene({
+          elements: cleanedElements as ExcalidrawElement[],
+          captureUpdate: CaptureUpdateAction.NEVER,
+        });
+      } finally {
+        // Use setTimeout to ensure the flag is reset after the current event loop
+        setTimeout(() => {
+          isApplyingRemoteRef.current = false;
+        }, 0);
+      }
+    },
+    []
+  );
+
+  // Use Yjs elements hook for collaborative sync
+  const { onExcalidrawChange } = useYjsElements(
+    props.yElements ?? null,
+    handleRemoteYjsChange,
+    { throttleMs: props.yjsThrottleMs }
+  );
+
+  // Handle local Excalidraw changes
+  const handleExcalidrawChange = useCallback(
+    (elements: readonly ExcalidrawElement[]) => {
+      // Don't sync if we're applying remote changes (to avoid loops)
+      if (isApplyingRemoteRef.current) return;
+
+      // If Yjs is enabled, sync through Yjs
+      if (props.yElements) {
+        onExcalidrawChange(elements);
+      }
+    },
+    [props.yElements, onExcalidrawChange]
+  );
 
   const baseUrl =
     props.serverUrl ||
@@ -193,7 +259,9 @@ export function ExcalidrawClient(
       switch (data.type) {
         case "initial_elements": {
           const elements = (data.elements as ServerElement[]) || [];
-          if (elements.length > 0) {
+          // Skip loading initial_elements if Yjs is enabled - Yjs will sync the authoritative state
+          // This prevents stale stateManager data from overwriting Y.Doc state
+          if (!props.yElements && elements.length > 0) {
             const cleanedElements = elements.map(cleanElementForExcalidraw);
             const validatedElements = validateAndFixBindings(cleanedElements);
             excalidrawAPI.updateScene({
@@ -349,6 +417,7 @@ export function ExcalidrawClient(
       excalidrawAPI={(api) => setExcalidrawAPI(api as unknown as ExcalidrawImperativeAPI)}
       theme={props.theme ?? "light"}
       initialData={props.initialData as Parameters<typeof Excalidraw>[0]["initialData"]}
+      onChange={(elements) => handleExcalidrawChange(elements as unknown as readonly ExcalidrawElement[])}
     />
   );
 }

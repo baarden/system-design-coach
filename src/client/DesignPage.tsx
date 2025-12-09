@@ -1,10 +1,10 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, Link } from "react-router-dom";
 import { ExcalidrawClient } from "./components/ExcalidrawClient";
 import { useAuth } from "./providers/auth";
 import { ChatWidget } from "./components/ChatWidget";
 import { ResizableMarkdownPanel } from "./components/ResizablePanel";
-import { useWebSocketMessages, useFeedbackRequest, useDemoImage, useUserCommentSteps } from "./hooks";
+import { useWebSocketMessages, useFeedbackRequest, useDemoImage, useUserCommentSteps, useYjsComments } from "./hooks";
 import type { CommentStep } from "./hooks";
 import {
   TextField,
@@ -19,6 +19,8 @@ import {
 import { AppBar } from "./components/AppBar";
 import { useTheme } from "./providers/theme";
 import { fetchProblem, getServerUrl } from "./api";
+import { YjsProvider, useYjs } from "./providers/yjs";
+import type { ExcalidrawMessage } from "@shared/types/excalidraw";
 
 interface DesignPageProps {
   title?: string;
@@ -42,7 +44,12 @@ function DesignPage({
     user: string;
     questionId: string;
   }>();
-  const { userId, isLoaded, isSignedIn, reloadUser, onUnavailable } = useAuth();
+  const { userId, isLoaded, isSignedIn } = useAuth();
+
+  // Refs for bridging WebSocket messages with YjsProvider
+  // IMPORTANT: These must come before any conditional returns (React hooks rules)
+  const sendMessageRef = useRef<(msg: unknown) => void>(() => {});
+  const yjsMessageHandlerRef = useRef<((payload: number[]) => void) | null>(null);
 
   // Auth checks for owner routes (not guest mode)
   if (!guestMode) {
@@ -56,32 +63,89 @@ function DesignPage({
     if (isLoaded && isSignedIn && user && userId !== user) {
       return (
         <Box sx={{ p: 4, textAlign: 'center' }}>
-          <Alert severity="error">
+          <Alert severity="error" sx={{ mb: 2 }}>
             You don't have permission to access this room.
           </Alert>
+          <Button component={Link} to="/" variant="contained">
+            Return to home page
+          </Button>
         </Box>
       );
     }
   }
+
+  // Construct roomId from URL params or override (guest mode)
+  const roomId = overrideRoomId || (user && questionId ? `${user}/${questionId}` : null);
+
+  // Don't render until we have valid roomId
+  if (!roomId) {
+    return null;
+  }
+
+  return (
+    <YjsProvider
+      sendMessage={(msg) => sendMessageRef.current(msg)}
+      onYjsMessage={(handler) => { yjsMessageHandlerRef.current = handler; }}
+    >
+      <DesignPageContent
+        title={title}
+        claudeFeedback={claudeFeedback}
+        guestMode={guestMode}
+        guestToken={guestToken}
+        roomId={roomId}
+        sendMessageRef={sendMessageRef}
+        yjsMessageHandlerRef={yjsMessageHandlerRef}
+      />
+    </YjsProvider>
+  );
+}
+
+interface DesignPageContentProps {
+  title: string;
+  claudeFeedback: string;
+  guestMode: boolean;
+  guestToken?: string;
+  roomId: string;
+  sendMessageRef: React.MutableRefObject<(msg: unknown) => void>;
+  yjsMessageHandlerRef: React.MutableRefObject<((payload: number[]) => void) | null>;
+}
+
+function DesignPageContent({
+  title,
+  claudeFeedback,
+  guestMode,
+  guestToken,
+  roomId,
+  sendMessageRef,
+  yjsMessageHandlerRef,
+}: DesignPageContentProps) {
+  const { userId, reloadUser, onUnavailable } = useAuth();
   const { mode } = useTheme();
+
+  // Get Yjs context for collaborative sync
+  const { yElements, yComments, requestSync } = useYjs();
+
+  // Use Yjs-backed comments for real-time collaboration
+  const { comments: yjsComments, setComments: setYjsComments } = useYjsComments(yComments);
 
   // UI state
   const [problemStatement, setProblemStatement] = useState<string>("");
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [claudeFeedbackText, setClaudeFeedback] = useState<string>(claudeFeedback || "");
 
-  // User comment steps management
+  // User comment steps management (for history navigation)
   const {
     steps: commentSteps,
-    latestDraft,
-    currentStepContent,
+    currentStepContent: historicalContent,
     isViewingLatestStep,
     totalSteps,
-    setLatestDraft,
     selectStep,
     initializeFromHistory,
     resetAfterSubmit,
   } = useUserCommentSteps();
+
+  // When viewing latest step, show Yjs-synced content; otherwise show historical
+  const currentStepContent = isViewingLatestStep ? yjsComments : historicalContent;
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [incomingChatMessage, setIncomingChatMessage] = useState<unknown | null>(null);
   const [isApiReady, setIsApiReady] = useState<boolean>(false);
@@ -111,9 +175,8 @@ function DesignPage({
   const feedbackScrollRef = useRef<HTMLDivElement>(null);
   const problemScrollRef = useRef<HTMLDivElement>(null);
 
-  // Construct roomId from URL params or override (guest mode)
-  const roomId = overrideRoomId || (user && questionId ? `${user}/${questionId}` : null);
-  const problemIdFromRoom = roomId?.split('/')[1] ?? questionId;
+  // Derived values from props
+  const problemIdFromRoom = roomId.split('/')[1];
   // Auth checks above ensure we're signed in with a valid userId that matches URL user.
   // NoopAuthProvider returns "default-user"; real auth returns the actual user ID.
   const effectiveUserId = userId!;
@@ -123,12 +186,12 @@ function DesignPage({
   // Construct WebSocket path based on access mode
   const wsPath = guestMode && guestToken
     ? `/ws/guest/${guestToken}`
-    : roomId ? `/ws/owner/${roomId}` : null;
+    : `/ws/owner/${roomId}`;
 
   // Demo image loader
   const { loadDemoImageIfEmpty } = useDemoImage();
 
-  // Feedback request hook
+  // Feedback request hook - use Yjs-synced comments
   const {
     handleGetFeedback,
     isFeedbackLoading,
@@ -138,7 +201,7 @@ function DesignPage({
     excalidrawApiRef,
     roomId,
     userId: effectiveUserId,
-    userComments: latestDraft,
+    userComments: yjsComments,
     onError: setErrorMessage,
   });
 
@@ -169,13 +232,14 @@ function DesignPage({
       },
       onUserCommentsReset: () => {
         resetAfterSubmit();
+        setYjsComments(''); // Clear Yjs-backed comments
       },
       onUserCommentHistory: (comments: CommentStep[]) => {
         initializeFromHistory(comments);
       },
       reloadUser,
     }),
-    [reloadUser, setIsFeedbackLoading, resetAfterSubmit, initializeFromHistory, onUnavailable]
+    [reloadUser, setIsFeedbackLoading, resetAfterSubmit, initializeFromHistory, onUnavailable, setYjsComments]
   );
 
   // WebSocket message handler
@@ -200,11 +264,19 @@ function DesignPage({
       });
   }, [problemIdFromRoom]);
 
-  // Don't render until we have valid roomId
-  if (!roomId) {
-    return null;
-  }
-
+  // Handle incoming yjs-sync messages from WebSocket
+  const handleIncomingMessage = useCallback(
+    (data: ExcalidrawMessage) => {
+      // Route yjs-sync messages to the Yjs handler
+      if (data.type === 'yjs-sync' && yjsMessageHandlerRef.current) {
+        const payload = (data as { type: 'yjs-sync'; payload: number[] }).payload;
+        yjsMessageHandlerRef.current(payload);
+      }
+      // Also pass to the regular message handler for other message types
+      handleWebSocketMessage(data);
+    },
+    [handleWebSocketMessage, yjsMessageHandlerRef]
+  );
 
   const handleMouseDown = useCallback(() => {
     setIsDragging(true);
@@ -384,16 +456,20 @@ function DesignPage({
           <ExcalidrawClient
             serverUrl={getServerUrl()}
             roomId={roomId}
-            wsPath={wsPath ?? undefined}
+            wsPath={wsPath}
             theme={mode}
+            yElements={yElements}
             onConnect={() => setIsConnected(true)}
             onDisconnect={() => setIsConnected(false)}
             onReady={(api, initialElements) => {
               excalidrawApiRef.current = api;
+              sendMessageRef.current = api.send;
               setIsApiReady(true);
+              // Request full Yjs state from server now that WebSocket is ready
+              requestSync();
               loadDemoImageIfEmpty(api.excalidrawAPI, initialElements.length);
             }}
-            onMessage={handleWebSocketMessage}
+            onMessage={handleIncomingMessage}
             onSyncError={(error) => {
               console.error("Sync error:", error);
             }}
@@ -460,13 +536,13 @@ function DesignPage({
               </MenuItem>
             </Select>
 
-            {/* TextField */}
+            {/* TextField - uses Yjs for real-time collaboration */}
             <TextField
               multiline
               value={currentStepContent}
               onChange={(e) => {
                 if (isViewingLatestStep) {
-                  setLatestDraft(e.target.value);
+                  setYjsComments(e.target.value);
                 }
               }}
               disabled={!isViewingLatestStep}
@@ -489,8 +565,10 @@ function DesignPage({
                   },
                 },
               }}
-              InputProps={{
-                readOnly: !isViewingLatestStep,
+              slotProps={{
+                input: {
+                  readOnly: !isViewingLatestStep,
+                },
               }}
             />
           </Box>

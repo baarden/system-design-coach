@@ -5,3 +5,5 @@ export { useFeedbackRequest } from "./useFeedbackRequest";
 export { useDemoImage } from "./useDemoImage";
 export { useUserCommentSteps } from "./useUserCommentSteps";
 export type { CommentStep } from "./useUserCommentSteps";
+export { useYjsComments } from "./useYjsComments";
+export { useYjsElements } from "./useYjsElements";

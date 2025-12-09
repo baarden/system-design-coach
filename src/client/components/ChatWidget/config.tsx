@@ -5,7 +5,7 @@ const config = {
   botName: "System Design Assistant",
   initialMessages: [
     createChatBotMessage(
-      "Hi! Feel free to ask me anything. I can't see your current design until after you've clicked the Get Feedback button, though.",
+      "Hi! Feel free to ask me anything. But you should know I can't see your current design until after you've clicked the Get Feedback button.",
       {}
     ),
   ],

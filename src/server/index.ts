@@ -14,6 +14,7 @@ import type { AsyncStateManager } from "./managers/types.js";
 import { MultiRoomStateManager } from "./managers/MultiRoomStateManager.js";
 import { RedisStateManager } from "./managers/RedisStateManager.js";
 import { MultiRoomClientManager } from "./managers/MultiRoomClientManager.js";
+import { YjsDocManager } from "./managers/YjsDocManager.js";
 import type { RoomRegistry } from "./registries/types.js";
 import { InMemoryRoomRegistry } from "./registries/InMemoryRoomRegistry.js";
 import { RedisRoomRegistry } from "./registries/RedisRoomRegistry.js";
@@ -63,6 +64,7 @@ if (config.redis.url) {
 }
 
 const clientManager = new MultiRoomClientManager();
+const yjsDocManager = new YjsDocManager(clientManager, 100);
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
 });
@@ -73,6 +75,7 @@ const problemRepository = createProblemRepository();
 const feedbackService = new FeedbackService({
   aiClient,
   stateManager,
+  yjsDocManager,
   broadcaster,
   usageProvider,
   problemRepository,
@@ -133,7 +136,7 @@ app.use("/api/problems", createProblemRoutes());
 app.use(createRoomRoutes({ roomRegistry, getBaseUrl }));
 
 // Setup WebSocket handlers
-setupWebSocketHandlers({ wss, stateManager, clientManager, feedbackService, chatService, roomRegistry });
+setupWebSocketHandlers({ wss, stateManager, clientManager, yjsDocManager, feedbackService, chatService, roomRegistry });
 
 // Serve static files in production
 if (process.env.NODE_ENV === "production") {

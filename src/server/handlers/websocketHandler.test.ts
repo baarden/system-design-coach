@@ -5,6 +5,7 @@ import type { IncomingMessage } from "http";
 import { setupWebSocketHandlers } from "./websocketHandler.js";
 import { MultiRoomStateManager } from "../managers/MultiRoomStateManager.js";
 import { MultiRoomClientManager } from "../managers/MultiRoomClientManager.js";
+import { YjsDocManager } from "../managers/YjsDocManager.js";
 import { InMemoryRoomRegistry } from "../registries/InMemoryRoomRegistry.js";
 import { FeedbackService } from "../services/FeedbackService.js";
 import { ChatService } from "../services/ChatService.js";
@@ -62,6 +63,7 @@ describe("websocketHandler", () => {
   let wss: WebSocketServer & { emit: Function };
   let stateManager: MultiRoomStateManager;
   let clientManager: MultiRoomClientManager;
+  let yjsDocManager: YjsDocManager;
   let feedbackService: FeedbackService;
   let chatService: ChatService;
 
@@ -69,6 +71,7 @@ describe("websocketHandler", () => {
     wss = createMockWSS();
     stateManager = new MultiRoomStateManager();
     clientManager = new MultiRoomClientManager();
+    yjsDocManager = new YjsDocManager(clientManager);
 
     const mockAIClient: AIClient = {
       createMessage: vi.fn().mockResolvedValue({
@@ -114,6 +117,7 @@ describe("websocketHandler", () => {
       wss,
       stateManager,
       clientManager,
+      yjsDocManager,
       feedbackService,
       chatService,
       roomRegistry,

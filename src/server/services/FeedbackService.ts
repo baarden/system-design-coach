@@ -1,6 +1,7 @@
 import type WebSocket from "ws";
 import type { ServerElement } from "../../shared/types/excalidraw.js";
 import type { AsyncStateManager } from "../managers/types.js";
+import type { YjsDocManager } from "../managers/YjsDocManager.js";
 import { UsageProvider } from "../providers/usage/types.js";
 import type { ProblemRepository } from "../repositories/ProblemRepository.js";
 import type { AIClient, AITool, AIToolUseBlock } from "./ai/types.js";
@@ -26,6 +27,8 @@ const SYSTEM_PROMPT_TEMPLATE = (problemStatement: string) =>
 interface FeedbackServiceDependencies {
   aiClient: AIClient;
   stateManager: AsyncStateManager;
+  /** Optional YjsDocManager for reading authoritative real-time element state */
+  yjsDocManager?: YjsDocManager;
   broadcaster: MessageBroadcaster;
   usageProvider: UsageProvider;
   problemRepository: ProblemRepository;
@@ -35,6 +38,7 @@ interface FeedbackServiceDependencies {
 export class FeedbackService {
   private aiClient: AIClient;
   private stateManager: AsyncStateManager;
+  private yjsDocManager?: YjsDocManager;
   private broadcaster: MessageBroadcaster;
   private usageProvider: UsageProvider;
   private problemRepository: ProblemRepository;
@@ -43,6 +47,7 @@ export class FeedbackService {
   constructor(deps: FeedbackServiceDependencies) {
     this.aiClient = deps.aiClient;
     this.stateManager = deps.stateManager;
+    this.yjsDocManager = deps.yjsDocManager;
     this.broadcaster = deps.broadcaster;
     this.usageProvider = deps.usageProvider;
     this.problemRepository = deps.problemRepository;
@@ -93,9 +98,16 @@ export class FeedbackService {
       }
 
       // Retrieve and filter Excalidraw elements for the room
-      const elements = Array.from(
-        (await this.stateManager.getElements(roomId)).values()
-      );
+      // Prefer YjsDocManager for authoritative real-time state (avoids race conditions)
+      // Fall back to stateManager for backwards compatibility
+      let elements: ServerElement[];
+      if (this.yjsDocManager) {
+        elements = this.yjsDocManager.getElements(roomId);
+      } else {
+        elements = Array.from(
+          (await this.stateManager.getElements(roomId)).values()
+        );
+      }
       const filteredElements = filterElementsForClaude(elements);
 
       // Generate JSON Patch diff

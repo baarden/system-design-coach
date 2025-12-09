@@ -21,7 +21,13 @@ export interface ChatMessage {
   userId: string;
 }
 
-export type IncomingWebSocketMessage = GetFeedbackMessage | ChatMessage;
+export interface YjsSyncMessage {
+  type: "yjs-sync";
+  /** Binary Yjs update encoded as number array */
+  payload: number[];
+}
+
+export type IncomingWebSocketMessage = GetFeedbackMessage | ChatMessage | YjsSyncMessage;
 
 // ============================================
 // Outgoing Messages (Server → Client)
@@ -88,6 +94,12 @@ export interface UserCommentHistoryMessage {
   comments: UserCommentHistoryItem[];
 }
 
+export interface YjsSyncBroadcast {
+  type: "yjs-sync";
+  /** Binary Yjs update encoded as number array */
+  payload: number[];
+}
+
 export type OutgoingWebSocketMessage =
   | StatusMessage
   | ClaudeFeedbackMessage
@@ -96,7 +108,8 @@ export type OutgoingWebSocketMessage =
   | ChatResponseMessage
   | ChatHistoryMessage
   | ElementsBatchCreatedMessage
-  | UserCommentHistoryMessage;
+  | UserCommentHistoryMessage
+  | YjsSyncBroadcast;
 
 // ============================================
 // Utility Types

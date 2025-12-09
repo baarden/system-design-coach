@@ -8,6 +8,7 @@ import type {
 import type { AsyncStateManager } from "../managers/types.js";
 import type { RoomRegistry } from "../registries/types.js";
 import { MultiRoomClientManager } from "../managers/MultiRoomClientManager.js";
+import { YjsDocManager } from "../managers/YjsDocManager.js";
 import { FeedbackService } from "../services/FeedbackService.js";
 import { ChatService } from "../services/ChatService.js";
 import { IncomingWebSocketMessage, ChatHistoryMessage, UserCommentHistoryMessage } from "../types/websocket.js";
@@ -16,6 +17,7 @@ interface WebSocketHandlerDependencies {
   wss: WebSocketServer;
   stateManager: AsyncStateManager;
   clientManager: MultiRoomClientManager;
+  yjsDocManager: YjsDocManager;
   feedbackService: FeedbackService;
   chatService: ChatService;
   roomRegistry: RoomRegistry;
@@ -65,7 +67,7 @@ async function parseWebSocketUrl(
 }
 
 export function setupWebSocketHandlers(deps: WebSocketHandlerDependencies): void {
-  const { wss, stateManager, clientManager, feedbackService, chatService, roomRegistry } = deps;
+  const { wss, stateManager, clientManager, yjsDocManager, feedbackService, chatService, roomRegistry } = deps;
 
   wss.on("connection", async (ws: WebSocket, req: IncomingMessage) => {
     const parsed = await parseWebSocketUrl(req.url || '', roomRegistry);
@@ -83,7 +85,17 @@ export function setupWebSocketHandlers(deps: WebSocketHandlerDependencies): void
 
     clientManager.addClient(ws, roomId);
 
-    // Send current elements to new client
+    // Set up Yjs update broadcasting for this room
+    yjsDocManager.setupUpdateBroadcasting(roomId);
+
+    // Send initial Yjs sync (SyncStep1) to new client
+    const yjsSyncStep1 = yjsDocManager.handleClientConnect(ws, roomId);
+    ws.send(JSON.stringify({
+      type: 'yjs-sync',
+      payload: Array.from(yjsSyncStep1),
+    }));
+
+    // Send current elements to new client (for backwards compatibility)
     const elements = await stateManager.getElements(roomId);
     const elementsArray = Array.from(elements.values());
     // Strip 'index' property to let Excalidraw regenerate valid fractional indices
@@ -160,7 +172,17 @@ export function setupWebSocketHandlers(deps: WebSocketHandlerDependencies): void
       try {
         const data: IncomingWebSocketMessage = JSON.parse(message.toString());
 
-        if (data.type === "get-feedback") {
+        if (data.type === "yjs-sync") {
+          // Yjs sync messages - allowed for both owners and guests (collaborative editing)
+          const payload = new Uint8Array(data.payload);
+          const response = yjsDocManager.handleSyncMessage(ws, roomId, payload);
+          if (response) {
+            ws.send(JSON.stringify({
+              type: 'yjs-sync',
+              payload: Array.from(response),
+            }));
+          }
+        } else if (data.type === "get-feedback") {
           if (accessMode === 'guest') {
             ws.send(JSON.stringify({ type: "status", eventId: data.eventId, status: "error", message: "Guests cannot request feedback" }));
             return;

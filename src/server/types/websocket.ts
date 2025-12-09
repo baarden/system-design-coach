@@ -47,6 +47,12 @@ export interface ChatMessage {
   userId: string;
 }
 
+export interface YjsSyncMessage {
+  type: "yjs-sync";
+  /** Binary Yjs update encoded as number array */
+  payload: number[];
+}
+
 export interface ChatResponseMessage {
   type: "chat-response";
   message: string;
@@ -80,7 +86,7 @@ export interface UserCommentHistoryMessage {
   comments: UserCommentHistoryItem[];
 }
 
-export type IncomingWebSocketMessage = GetFeedbackMessage | ChatMessage;
+export type IncomingWebSocketMessage = GetFeedbackMessage | ChatMessage | YjsSyncMessage;
 
 export type OutgoingWebSocketMessage =
   | StatusMessage

@@ -18,8 +18,7 @@ export function useDemoImage() {
 
   const loadDemoImageIfEmpty = useCallback(
     async (api: ExcalidrawImperativeAPI, initialElementCount: number) => {
-      if (loadedRef.current) return;
-      if (initialElementCount > 0) return;
+      if (loadedRef.current || initialElementCount > 0) return;
 
       loadedRef.current = true;
 
@@ -79,7 +78,7 @@ export function useDemoImage() {
           ],
         });
       } catch (error) {
-        console.error("Failed to load demo image:", error);
+        console.error("[Demo] Failed to load demo image:", error);
       }
     },
     []
