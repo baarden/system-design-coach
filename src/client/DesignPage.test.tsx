@@ -54,6 +54,8 @@ function renderDesignPage(route = "/test-user/url-shortener") {
 describe("DesignPage", () => {
   beforeEach(() => {
     resetMockExcalidrawState();
+    // Mark tutorial as seen to prevent dialog from blocking UI in tests
+    localStorage.setItem('tutorial-seen', 'true');
   });
 
   describe("initial render", () => {
@@ -318,6 +320,53 @@ describe("DesignPage", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("chat-widget")).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("tutorial dialog", () => {
+    it("shows tutorial dialog on first visit", async () => {
+      localStorage.removeItem('tutorial-seen');
+      renderDesignPage();
+
+      expect(screen.getByRole("dialog", { name: /getting started/i })).toBeInTheDocument();
+    });
+
+    it("does not show tutorial dialog when already seen", async () => {
+      localStorage.setItem('tutorial-seen', 'true');
+      renderDesignPage();
+
+      expect(screen.queryByRole("dialog", { name: /getting started/i })).not.toBeInTheDocument();
+    });
+
+    it("closes tutorial dialog and sets localStorage when clicking Got it", async () => {
+      const user = userEvent.setup();
+      localStorage.removeItem('tutorial-seen');
+      renderDesignPage();
+
+      expect(screen.getByRole("dialog", { name: /getting started/i })).toBeInTheDocument();
+
+      const gotItButton = screen.getByRole("button", { name: /got it/i });
+      await user.click(gotItButton);
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: /getting started/i })).not.toBeInTheDocument();
+      });
+      expect(localStorage.getItem('tutorial-seen')).toBe('true');
+    });
+
+    it("opens tutorial dialog when clicking info icon", async () => {
+      const user = userEvent.setup();
+      localStorage.setItem('tutorial-seen', 'true');
+      renderDesignPage();
+
+      expect(screen.queryByRole("dialog", { name: /getting started/i })).not.toBeInTheDocument();
+
+      const infoButton = screen.getByRole("button", { name: /how to use/i });
+      await user.click(infoButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole("dialog", { name: /getting started/i })).toBeInTheDocument();
       });
     });
   });

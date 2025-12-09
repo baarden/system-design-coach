@@ -17,6 +17,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ShareIcon from '@mui/icons-material/Share';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { AuthUI } from '../../providers/auth';
 import { useTheme } from '../../providers/theme';
 import { ShareDialog } from '../ShareDialog';
@@ -27,6 +28,7 @@ interface AppBarProps {
   position?: 'fixed' | 'static';
   roomId?: string | null;
   isOwner?: boolean;
+  onTutorialClick?: () => void;
 }
 
 export function AppBar({
@@ -35,6 +37,7 @@ export function AppBar({
   position = 'static',
   roomId,
   isOwner = false,
+  onTutorialClick,
 }: AppBarProps) {
   const navigate = useNavigate();
   const { mode, toggleTheme } = useTheme();
@@ -100,6 +103,17 @@ export function AppBar({
           {title}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {onTutorialClick && (
+            <Tooltip title="How to use">
+              <IconButton
+                color="inherit"
+                onClick={onTutorialClick}
+                aria-label="How to use"
+              >
+                <InfoOutlinedIcon />
+              </IconButton>
+            </Tooltip>
+          )}
           {isOwner && roomId && (
             <Tooltip title="Share room">
               <IconButton

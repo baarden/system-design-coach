@@ -4,7 +4,7 @@ import { ExcalidrawClient } from "./components/ExcalidrawClient";
 import { useAuth } from "./providers/auth";
 import { ChatWidget } from "./components/ChatWidget";
 import { ResizableMarkdownPanel } from "./components/ResizablePanel";
-import { useWebSocketMessages, useFeedbackRequest, useDemoImage, useUserCommentSteps, useYjsComments } from "./hooks";
+import { useWebSocketMessages, useFeedbackRequest, useUserCommentSteps, useYjsComments } from "./hooks";
 import type { CommentStep } from "./hooks";
 import {
   TextField,
@@ -17,10 +17,13 @@ import {
   MenuItem,
 } from "@mui/material";
 import { AppBar } from "./components/AppBar";
+import { TutorialDialog } from "./components/TutorialDialog";
 import { useTheme } from "./providers/theme";
 import { fetchProblem, getServerUrl } from "./api";
 import { YjsProvider, useYjs } from "./providers/yjs";
 import type { ExcalidrawMessage } from "@shared/types/excalidraw";
+
+const TUTORIAL_SEEN_KEY = 'tutorial-seen';
 
 interface DesignPageProps {
   title?: string;
@@ -149,6 +152,9 @@ function DesignPageContent({
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [incomingChatMessage, setIncomingChatMessage] = useState<unknown | null>(null);
   const [isApiReady, setIsApiReady] = useState<boolean>(false);
+  const [tutorialOpen, setTutorialOpen] = useState<boolean>(
+    () => localStorage.getItem(TUTORIAL_SEEN_KEY) !== 'true'
+  );
 
   // Panel heights for resizable panels
   const [commentsHeight, setCommentsHeight] = useState<number>(120);
@@ -188,8 +194,11 @@ function DesignPageContent({
     ? `/ws/guest/${guestToken}`
     : `/ws/owner/${roomId}`;
 
-  // Demo image loader
-  const { loadDemoImageIfEmpty } = useDemoImage();
+  // Tutorial dialog handler
+  const handleTutorialClose = useCallback(() => {
+    setTutorialOpen(false);
+    localStorage.setItem(TUTORIAL_SEEN_KEY, 'true');
+  }, []);
 
   // Feedback request hook - use Yjs-synced comments
   const {
@@ -406,7 +415,13 @@ function DesignPageContent({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
-      <AppBar title={title} isConnected={isConnected} roomId={roomId} isOwner={isOwner} />
+      <AppBar
+        title={title}
+        isConnected={isConnected}
+        roomId={roomId}
+        isOwner={isOwner}
+        onTutorialClick={() => setTutorialOpen(true)}
+      />
 
       {/* Main Content */}
       <Box
@@ -461,13 +476,12 @@ function DesignPageContent({
             yElements={yElements}
             onConnect={() => setIsConnected(true)}
             onDisconnect={() => setIsConnected(false)}
-            onReady={(api, initialElements) => {
+            onReady={(api) => {
               excalidrawApiRef.current = api;
               sendMessageRef.current = api.send;
               setIsApiReady(true);
               // Request full Yjs state from server now that WebSocket is ready
               requestSync();
-              loadDemoImageIfEmpty(api.excalidrawAPI, initialElements.length);
             }}
             onMessage={handleIncomingMessage}
             onSyncError={(error) => {
@@ -616,6 +630,9 @@ function DesignPageContent({
           onMessageConsumed={() => setIncomingChatMessage(null)}
         />
       )}
+
+      {/* Tutorial Dialog */}
+      <TutorialDialog open={tutorialOpen} onClose={handleTutorialClose} />
     </Box>
   );
 }
