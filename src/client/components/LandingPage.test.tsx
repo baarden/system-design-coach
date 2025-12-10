@@ -34,7 +34,8 @@ describe("LandingPage", () => {
   it("renders the app title", async () => {
     renderLandingPage();
 
-    expect(screen.getByText("System Design Coach")).toBeInTheDocument();
+    // Title appears in both AppBar and hero section
+    expect(screen.getAllByText("System Design Coach")).toHaveLength(2);
   });
 
   it("renders the description text", async () => {

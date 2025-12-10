@@ -19,6 +19,7 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ShareIcon from '@mui/icons-material/Share';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { AuthUI } from '../../providers/auth';
+import iconPng from '../../assets/icon.png';
 import { useTheme } from '../../providers/theme';
 import { ShareDialog } from '../ShareDialog';
 
@@ -94,14 +95,22 @@ export function AppBar({
             <ListItemText>GitHub</ListItemText>
           </MenuItem>
         </Menu>
-        <Typography
-          variant="h6"
-          component="div"
+        <Box
           onClick={() => navigate('/')}
-          sx={{ flexGrow: 1, cursor: 'pointer', '&:hover': { opacity: 0.8 } }}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            flexGrow: 1,
+            cursor: 'pointer',
+            '&:hover': { opacity: 0.8 },
+          }}
         >
-          {title}
-        </Typography>
+          <img src={iconPng} alt="" width={28} height={28} style={{ borderRadius: 4 }} />
+          <Typography variant="h6" component="div">
+            {title}
+          </Typography>
+        </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {onTutorialClick && (
             <Tooltip title="How to use">

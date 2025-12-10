@@ -40,6 +40,17 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       createTheme({
         palette: {
           mode,
+          primary: {
+            main: '#37474F',
+          },
+        },
+        typography: {
+          h1: { fontFamily: '"Outfit", sans-serif', fontWeight: 600 },
+          h2: { fontFamily: '"Outfit", sans-serif', fontWeight: 600 },
+          h3: { fontFamily: '"Outfit", sans-serif', fontWeight: 600 },
+          h4: { fontFamily: '"Outfit", sans-serif', fontWeight: 600 },
+          h5: { fontFamily: '"Outfit", sans-serif', fontWeight: 600 },
+          h6: { fontFamily: '"Outfit", sans-serif', fontWeight: 600 },
         },
       }),
     [mode]
