@@ -102,10 +102,11 @@ describe("ChatService", () => {
     it("records token usage", async () => {
       await service.handleChatMessage(ws, roomId, chatMessage, "user123");
 
-      expect(usageProvider.recordUsage).toHaveBeenCalledWith("user123", {
-        inputTokens: 50,
-        outputTokens: 25,
-      });
+      expect(usageProvider.recordUsage).toHaveBeenCalledWith(
+        "user123",
+        { inputTokens: 50, outputTokens: 25 },
+        expect.any(Function)
+      );
     });
 
     it("initializes conversation if not exists", async () => {

@@ -195,7 +195,7 @@ export class FeedbackService {
       await this.usageProvider.recordUsage(userId, {
         inputTokens: response.usage.inputTokens,
         outputTokens: response.usage.outputTokens,
-      });
+      }, (msg) => ws.send(JSON.stringify(msg)));
 
       // Extract tool use from response
       const toolUseBlock = response.content.find(

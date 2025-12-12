@@ -122,7 +122,7 @@ export class ChatService {
       await this.usageProvider.recordUsage(userId, {
         inputTokens: response.usage.inputTokens,
         outputTokens: response.usage.outputTokens,
-      });
+      }, (msg) => ws.send(JSON.stringify(msg)));
 
       // Extract text response
       const textBlock = response.content.find((block) => block.type === "text");

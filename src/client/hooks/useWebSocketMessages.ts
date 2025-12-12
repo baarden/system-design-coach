@@ -118,6 +118,9 @@ export function useWebSocketMessages({
           handlers.reloadUser();
         }
       }
+
+      // Dispatch all messages as DOM events for extensibility
+      window.dispatchEvent(new CustomEvent(`ws:${data.type}`, { detail: data }));
     },
     [pendingEventIdRef, handlers]
   );

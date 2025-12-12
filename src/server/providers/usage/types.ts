@@ -13,6 +13,11 @@ export interface UsageProvider {
   /**
    * Record usage after an action completes.
    * Provider handles any billing/tracking internally.
+   * @param notify Optional callback to send messages to the client
    */
-  recordUsage(userId: string, usage: TokenUsage): Promise<void>;
+  recordUsage(
+    userId: string,
+    usage: TokenUsage,
+    notify?: (message: unknown) => void
+  ): Promise<void>;
 }

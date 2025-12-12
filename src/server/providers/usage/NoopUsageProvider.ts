@@ -5,7 +5,7 @@ export class NoopUsageProvider implements UsageProvider {
     return null; // Always available
   }
 
-  async recordUsage(_userId: string, _usage: TokenUsage): Promise<void> {
+  async recordUsage(_userId: string, _usage: TokenUsage, _notify?: (message: unknown) => void): Promise<void> {
     // No-op
   }
 }

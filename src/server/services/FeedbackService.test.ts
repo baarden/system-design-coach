@@ -139,10 +139,11 @@ describe("FeedbackService", () => {
     it("records token usage", async () => {
       await service.handleGetFeedback(ws, roomId, feedbackMessage, "user123");
 
-      expect(usageProvider.recordUsage).toHaveBeenCalledWith("user123", {
-        inputTokens: 100,
-        outputTokens: 50,
-      });
+      expect(usageProvider.recordUsage).toHaveBeenCalledWith(
+        "user123",
+        { inputTokens: 100, outputTokens: 50 },
+        expect.any(Function)
+      );
     });
 
     it("initializes conversation if not exists", async () => {
