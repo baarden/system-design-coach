@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import type { RoomRegistry } from '../registries/types.js';
+import { logger } from '../utils/logger.js';
 
 interface RoomRoutesDependencies {
   roomRegistry: RoomRegistry;
@@ -32,7 +33,7 @@ export function createRoomRoutes(deps: RoomRoutesDependencies): Router {
         },
       });
     } catch (error) {
-      console.error('Error resolving token:', error);
+      logger.error('Error resolving token', { error: (error as Error).message });
       res.status(500).json({
         success: false,
         error: (error as Error).message,
@@ -67,7 +68,7 @@ export function createRoomRoutes(deps: RoomRoutesDependencies): Router {
         },
       });
     } catch (error) {
-      console.error('Error getting room:', error);
+      logger.error('Error getting room', { error: (error as Error).message });
       res.status(500).json({
         success: false,
         error: (error as Error).message,
@@ -92,7 +93,7 @@ export function createRoomRoutes(deps: RoomRoutesDependencies): Router {
         },
       });
     } catch (error) {
-      console.error('Error creating room:', error);
+      logger.error('Error creating room', { error: (error as Error).message });
       res.status(500).json({
         success: false,
         error: (error as Error).message,
@@ -115,7 +116,7 @@ export function createRoomRoutes(deps: RoomRoutesDependencies): Router {
         message: 'Token regenerated. Old share links are now invalid.',
       });
     } catch (error) {
-      console.error('Error regenerating token:', error);
+      logger.error('Error regenerating token', { error: (error as Error).message });
       res.status(500).json({
         success: false,
         error: (error as Error).message,

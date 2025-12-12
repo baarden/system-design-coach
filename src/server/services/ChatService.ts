@@ -9,6 +9,7 @@ import {
   StatusMessage,
 } from "../types/websocket.js";
 import { parseProblemIdFromRoomId } from "../utils/roomUtils.js";
+import { logger } from "../utils/logger.js";
 
 const CHAT_SYSTEM_PROMPT =
   "You are an experienced system design reviewer. The user is working on a software system design problem. You are coaching the user in a chat window, and you should not offer to solve the problem for the user, or to change the design problem.";
@@ -163,7 +164,7 @@ export class ChatService {
       };
       ws.send(JSON.stringify(statusMessage));
     } catch (error) {
-      console.error("Error handling chat message:", error);
+      logger.error("Error handling chat message", { error: (error as Error).message });
 
       const errorMessage: StatusMessage = {
         type: "status",

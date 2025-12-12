@@ -46,53 +46,52 @@ export const mockProblemDetails: Record<string, ProblemWithStatement> = {
   },
 };
 
-// Match both localhost and 127.0.0.1
-const API_BASES = ["http://127.0.0.1:3001", "http://localhost:3001"];
+// Use wildcard patterns to match both relative URLs (/api/...) and full URLs
+export const handlers = [
+  // GET /api/problems - List all problems
+  http.get("*/api/problems", ({ request }) => {
+    // Don't match if there's a path segment after /problems (let the :problemId handler catch it)
+    const url = new URL(request.url);
+    if (url.pathname !== "/api/problems") {
+      return;
+    }
+    const response: ProblemsListResponse = {
+      success: true,
+      problems: mockProblems,
+    };
+    return HttpResponse.json(response);
+  }),
 
-function createHandlersForBase(base: string) {
-  return [
-    // GET /api/problems - List all problems
-    http.get(`${base}/api/problems`, () => {
-      const response: ProblemsListResponse = {
-        success: true,
-        problems: mockProblems,
-      };
-      return HttpResponse.json(response);
-    }),
+  // GET /api/problems/:problemId - Get single problem with statement
+  http.get("*/api/problems/:problemId", ({ params }) => {
+    const { problemId } = params;
+    const problem = mockProblemDetails[problemId as string];
 
-    // GET /api/problems/:problemId - Get single problem with statement
-    http.get(`${base}/api/problems/:problemId`, ({ params }) => {
-      const { problemId } = params;
-      const problem = mockProblemDetails[problemId as string];
-
-      if (!problem) {
-        const response: ProblemDetailResponse = {
-          success: false,
-          error: "Problem not found",
-        };
-        return HttpResponse.json(response, { status: 404 });
-      }
-
+    if (!problem) {
       const response: ProblemDetailResponse = {
-        success: true,
-        problem,
+        success: false,
+        error: "Problem not found",
       };
-      return HttpResponse.json(response);
-    }),
+      return HttpResponse.json(response, { status: 404 });
+    }
 
-    // GET /api/health - Health check
-    http.get(`${base}/api/health`, () => {
-      return HttpResponse.json({
-        status: "ok",
-        roomCount: 0,
-        clientCount: 0,
-        redis: {
-          enabled: false,
-          connected: false,
-        },
-      });
-    }),
-  ];
-}
+    const response: ProblemDetailResponse = {
+      success: true,
+      problem,
+    };
+    return HttpResponse.json(response);
+  }),
 
-export const handlers = API_BASES.flatMap(createHandlersForBase);
+  // GET /api/health - Health check
+  http.get("*/api/health", () => {
+    return HttpResponse.json({
+      status: "ok",
+      roomCount: 0,
+      clientCount: 0,
+      redis: {
+        enabled: false,
+        connected: false,
+      },
+    });
+  }),
+];

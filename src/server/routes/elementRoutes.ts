@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import type { ServerElement } from "../../shared/types/excalidraw.js";
 import type { AsyncStateManager } from "../managers/types.js";
 import { MultiRoomClientManager } from "../managers/MultiRoomClientManager.js";
+import { logger } from "../utils/logger.js";
 
 interface ElementRoutesDependencies {
   stateManager: AsyncStateManager;
@@ -33,7 +34,7 @@ export function createElementRoutes(deps: ElementRoutesDependencies): Router {
         roomId,
       });
     } catch (error) {
-      console.error("Error fetching elements:", error);
+      logger.error("Error fetching elements", { error: (error as Error).message });
       res.status(500).json({
         success: false,
         error: (error as Error).message,
@@ -104,7 +105,7 @@ export function createElementRoutes(deps: ElementRoutesDependencies): Router {
         roomId,
       });
     } catch (error) {
-      console.error("Sync error:", error);
+      logger.error("Sync error", { error: (error as Error).message });
       res.status(500).json({
         success: false,
         error: (error as Error).message,

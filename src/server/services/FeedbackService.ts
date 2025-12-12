@@ -7,6 +7,7 @@ import type { ProblemRepository } from "../repositories/ProblemRepository.js";
 import type { AIClient, AITool, AIToolUseBlock } from "./ai/types.js";
 import type { MessageBroadcaster } from "./MessageBroadcaster.js";
 import { filterElementsForClaude } from "../utils/elementFilters.js";
+import { logger } from "../utils/logger.js";
 import {
   elementsArrayToObject,
   generateElementsPatch,
@@ -273,7 +274,7 @@ export class FeedbackService {
       };
       ws.send(JSON.stringify(statusMessage));
     } catch (error) {
-      console.error("Error handling get-feedback:", error);
+      logger.error("Error handling get-feedback", { error: (error as Error).message });
 
       // Send error status back to client
       const errorMessage: StatusMessage = {
@@ -301,9 +302,7 @@ export class FeedbackService {
     for (const change of diagramChanges) {
       const referencedElement = elementMap.get(change.objectId);
       if (!referencedElement) {
-        console.warn(
-          `Referenced element ${change.objectId} not found, skipping label`
-        );
+        logger.warn("Referenced element not found, skipping label", { objectId: change.objectId });
         continue;
       }
 

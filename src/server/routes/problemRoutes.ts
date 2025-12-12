@@ -3,6 +3,7 @@ import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import type { Problem } from "../types/conversation.js";
+import { logger } from "../utils/logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -36,7 +37,7 @@ export function createProblemRoutes(): Router {
         problems,
       });
     } catch (error) {
-      console.error("Error fetching problems:", error);
+      logger.error("Error fetching problems", { error: (error as Error).message });
       res.status(500).json({
         success: false,
         error: (error as Error).message,
@@ -62,7 +63,7 @@ export function createProblemRoutes(): Router {
         problem,
       });
     } catch (error) {
-      console.error("Error fetching problem:", error);
+      logger.error("Error fetching problem", { error: (error as Error).message });
       res.status(500).json({
         success: false,
         error: (error as Error).message,

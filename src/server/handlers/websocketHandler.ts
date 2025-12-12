@@ -12,6 +12,7 @@ import { YjsDocManager } from "../managers/YjsDocManager.js";
 import { FeedbackService } from "../services/FeedbackService.js";
 import { ChatService } from "../services/ChatService.js";
 import { IncomingWebSocketMessage, ChatHistoryMessage, UserCommentHistoryMessage } from "../types/websocket.js";
+import { logger } from "../utils/logger.js";
 
 interface WebSocketHandlerDependencies {
   wss: WebSocketServer;
@@ -73,7 +74,7 @@ export function setupWebSocketHandlers(deps: WebSocketHandlerDependencies): void
     const parsed = await parseWebSocketUrl(req.url || '', roomRegistry);
 
     if (!parsed) {
-      console.error("WebSocket connection rejected: invalid URL or unauthorized");
+      logger.warn("WebSocket connection rejected", { reason: "invalid URL or unauthorized" });
       ws.close(1008, "Invalid room URL or unauthorized");
       return;
     }
@@ -188,7 +189,7 @@ export function setupWebSocketHandlers(deps: WebSocketHandlerDependencies): void
             return;
           }
           feedbackService.handleGetFeedback(ws, roomId, data, userId!).catch((error) => {
-            console.error(`[WebSocket] Unhandled error in feedbackService for room ${roomId}:`, error);
+            logger.error("Unhandled error in feedbackService", { roomId, error: (error as Error).message });
           });
         } else if (data.type === "chat-message") {
           if (accessMode === 'guest') {
@@ -196,11 +197,11 @@ export function setupWebSocketHandlers(deps: WebSocketHandlerDependencies): void
             return;
           }
           chatService.handleChatMessage(ws, roomId, data, userId!).catch((error) => {
-            console.error(`[WebSocket] Unhandled error in chatService for room ${roomId}:`, error);
+            logger.error("Unhandled error in chatService", { roomId, error: (error as Error).message });
           });
         }
       } catch (error) {
-        console.error("Error processing WebSocket message:", error);
+        logger.error("Error processing WebSocket message", { error: (error as Error).message });
       }
     });
 
@@ -209,7 +210,7 @@ export function setupWebSocketHandlers(deps: WebSocketHandlerDependencies): void
     });
 
     ws.on("error", (error) => {
-      console.error("WebSocket error:", error);
+      logger.error("WebSocket error", { error: (error as Error).message });
       clientManager.removeClient(ws);
     });
   });
