@@ -286,11 +286,16 @@ export class FeedbackService {
     }
   }
 
+  /**
+   * Creates label elements for diagram changes.
+   * Returns skeleton elements (ellipse with label property) that the client
+   * will convert using convertToExcalidrawElements to create properly bound text.
+   */
   private async createLabelElements(
     roomId: string,
     diagramChanges: DiagramChange[]
-  ): Promise<ServerElement[]> {
-    const newElements: ServerElement[] = [];
+  ): Promise<Record<string, unknown>[]> {
+    const skeletonElements: Record<string, unknown>[] = [];
     const elementMap = await this.stateManager.getElements(roomId);
 
     for (const change of diagramChanges) {
@@ -302,11 +307,8 @@ export class FeedbackService {
         continue;
       }
 
-      // Create unique IDs for circle and text
+      // Create unique ID for the circle
       const circleId = `claude-circle-${Date.now()}-${Math.random()
-        .toString(36)
-        .substring(2, 11)}`;
-      const textId = `claude-text-${Date.now()}-${Math.random()
         .toString(36)
         .substring(2, 11)}`;
 
@@ -314,81 +316,31 @@ export class FeedbackService {
       const circleX = referencedElement.x - 5;
       const circleY = referencedElement.y - 5;
 
-      // Create circle element (40x40, blue background)
-      const circleElement: ServerElement = {
+      // Create skeleton element with label property
+      // convertToExcalidrawElements will create the bound text element
+      const skeletonElement = {
         id: circleId,
         type: "ellipse",
         x: circleX,
         y: circleY,
         width: 40,
         height: 40,
-        angle: 0,
         strokeColor: "#1971c2",
         backgroundColor: "#a5d8ff",
         fillStyle: "solid",
         strokeWidth: 2,
-        strokeStyle: "solid",
         roughness: 0,
-        opacity: 100,
-        groupIds: [],
-        frameId: null,
-        roundness: null,
-        seed: Math.floor(Math.random() * 1000000),
-        versionNonce: Math.floor(Math.random() * 1000000),
-        isDeleted: false,
-        boundElements: [{ type: "text", id: textId }],
-        locked: false,
-        link: null,
-        syncedAt: new Date().toISOString(),
-        version: 1,
-      };
-
-      // Create text element (centered in circle)
-      const textElement: ServerElement = {
-        id: textId,
-        type: "text",
-        x: circleX + 20,
-        y: circleY + 20,
-        width: 0,
-        height: 0,
-        angle: 0,
-        strokeColor: "#1e1e1e",
-        backgroundColor: "transparent",
-        fillStyle: "solid",
-        strokeWidth: 2,
-        strokeStyle: "solid",
-        roughness: 0,
-        opacity: 100,
-        groupIds: [],
-        frameId: null,
-        roundness: null,
-        seed: Math.floor(Math.random() * 1000000),
-        versionNonce: Math.floor(Math.random() * 1000000),
-        isDeleted: false,
-        locked: false,
-        link: null,
-        containerId: circleId,
-        syncedAt: new Date().toISOString(),
-        version: 1,
-        // Text-specific properties
-        ...{
+        // Label property - convertToExcalidrawElements creates bound text from this
+        label: {
           text: change.number.toString(),
           fontSize: 20,
-          fontFamily: 1,
-          textAlign: "center",
-          verticalAlign: "middle",
-          baseline: 18,
-          originalText: change.number.toString(),
+          strokeColor: "#1e1e1e",
         },
       };
 
-      // Add elements to state
-      await this.stateManager.setElement(circleId, circleElement, roomId);
-      await this.stateManager.setElement(textId, textElement, roomId);
-
-      newElements.push(circleElement, textElement);
+      skeletonElements.push(skeletonElement);
     }
 
-    return newElements;
+    return skeletonElements;
   }
 }

@@ -325,14 +325,18 @@ export function ExcalidrawClient(
         }
 
         case "elements_batch_created": {
-          const elements = data.elements as ServerElement[];
-          if (elements) {
-            const cleanedBatchElements = elements.map(cleanElementForExcalidraw);
-            const batchElements = convertToExcalidrawElements(
-              cleanedBatchElements as Parameters<typeof convertToExcalidrawElements>[0]
+          // Elements can be skeleton format (with label property) or full elements
+          const elements = data.elements as Record<string, unknown>[];
+          if (elements && elements.length > 0) {
+            // Convert skeleton elements to full Excalidraw elements
+            // This handles label -> bound text conversion with proper bindings
+            // Use regenerateIds: false to preserve IDs set by server
+            const convertedElements = convertToExcalidrawElements(
+              elements as Parameters<typeof convertToExcalidrawElements>[0],
+              { regenerateIds: false }
             );
             excalidrawAPI.updateScene({
-              elements: [...currentElements, ...batchElements],
+              elements: [...currentElements, ...convertedElements],
               captureUpdate: CaptureUpdateAction.NEVER,
             });
           }

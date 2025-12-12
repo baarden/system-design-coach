@@ -71,7 +71,8 @@ export interface ChatHistoryMessage {
 
 export interface ElementsBatchCreatedMessage {
   type: "elements_batch_created";
-  elements: ServerElement[];
+  // Can be full ServerElements or skeleton elements (with label property for text containers)
+  elements: ServerElement[] | Record<string, unknown>[];
   timestamp: string;
 }
 
