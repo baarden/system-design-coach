@@ -152,6 +152,9 @@ export function ExcalidrawClient(
   const readyFiredRef = useRef(false);
   // Track if we're applying remote Yjs changes to avoid loops
   const isApplyingRemoteRef = useRef(false);
+  // Track WebSocket activity for stale connection detection (CDN idle timeouts)
+  const lastActivityRef = useRef<number>(Date.now());
+  const CONNECTION_MAX_IDLE_MS = 20000; // 20 seconds
 
   excalidrawAPIRef.current = excalidrawAPI;
 
@@ -210,7 +213,27 @@ export function ExcalidrawClient(
   const wsPath = props.wsPath ?? roomIdPath;
 
   const send = (message: unknown): void => {
+    const now = Date.now();
+    const timeSinceActivity = now - lastActivityRef.current;
+
+    // If connection is stale, reconnect before sending
+    if (timeSinceActivity > CONNECTION_MAX_IDLE_MS && websocketRef.current) {
+      websocketRef.current.close();
+      // connectWebSocket will be called by onclose handler, queue the message
+      const waitForConnection = (): void => {
+        if (websocketRef.current?.readyState === WebSocket.OPEN) {
+          lastActivityRef.current = Date.now();
+          websocketRef.current.send(JSON.stringify(message));
+        } else if (websocketRef.current?.readyState === WebSocket.CONNECTING) {
+          setTimeout(waitForConnection, 50);
+        }
+      };
+      setTimeout(waitForConnection, 100);
+      return;
+    }
+
     if (websocketRef.current?.readyState === WebSocket.OPEN) {
+      lastActivityRef.current = now;
       websocketRef.current.send(JSON.stringify(message));
     }
   };
@@ -373,11 +396,13 @@ export function ExcalidrawClient(
     websocketRef.current = new WebSocket(wsUrl);
 
     websocketRef.current.onopen = () => {
+      lastActivityRef.current = Date.now(); // Fresh connection
       props.onConnect?.();
       // Note: onReady is NOT fired here. It fires after initial_elements arrives.
     };
 
     websocketRef.current.onmessage = (event: MessageEvent) => {
+      lastActivityRef.current = Date.now(); // Track activity
       try {
         const data: ExcalidrawMessage = JSON.parse(event.data);
         handleWebSocketMessage(data);
