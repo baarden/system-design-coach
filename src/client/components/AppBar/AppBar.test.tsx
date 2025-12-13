@@ -161,22 +161,29 @@ describe("AppBar", () => {
   });
 
   describe("connection status", () => {
-    it("shows Connected when isConnected is true", () => {
-      renderAppBar({ isConnected: true });
+    it("shows Connected when connectionState is connected", () => {
+      renderAppBar({ connectionState: 'connected' });
 
       expect(screen.getByText("Connected")).toBeInTheDocument();
     });
 
-    it("shows Disconnected when isConnected is false", () => {
-      renderAppBar({ isConnected: false });
+    it("shows Idle when connectionState is idle", () => {
+      renderAppBar({ connectionState: 'idle' });
+
+      expect(screen.getByText("Idle")).toBeInTheDocument();
+    });
+
+    it("shows Disconnected when connectionState is disconnected", () => {
+      renderAppBar({ connectionState: 'disconnected' });
 
       expect(screen.getByText("Disconnected")).toBeInTheDocument();
     });
 
-    it("does not show connection status when isConnected is undefined", () => {
+    it("does not show connection status when connectionState is undefined", () => {
       renderAppBar();
 
       expect(screen.queryByText("Connected")).not.toBeInTheDocument();
+      expect(screen.queryByText("Idle")).not.toBeInTheDocument();
       expect(screen.queryByText("Disconnected")).not.toBeInTheDocument();
     });
   });

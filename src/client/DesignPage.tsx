@@ -133,7 +133,7 @@ function DesignPageContent({
 
   // UI state
   const [problemStatement, setProblemStatement] = useState<string>("");
-  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [connectionState, setConnectionState] = useState<'connected' | 'idle' | 'disconnected'>('disconnected');
   const [claudeFeedbackText, setClaudeFeedback] = useState<string>(claudeFeedback || "");
 
   // User comment steps management (for history navigation)
@@ -417,7 +417,7 @@ function DesignPageContent({
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
       <AppBar
         title={title}
-        isConnected={isConnected}
+        connectionState={connectionState}
         roomId={roomId}
         isOwner={isOwner}
         onTutorialClick={() => setTutorialOpen(true)}
@@ -474,8 +474,9 @@ function DesignPageContent({
             wsPath={wsPath}
             theme={mode}
             yElements={yElements}
-            onConnect={() => setIsConnected(true)}
-            onDisconnect={() => setIsConnected(false)}
+            onConnect={() => setConnectionState('connected')}
+            onDisconnect={() => setConnectionState('disconnected')}
+            onIdle={() => setConnectionState('idle')}
             onReady={(api) => {
               excalidrawApiRef.current = api;
               sendMessageRef.current = api.send;

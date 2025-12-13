@@ -23,18 +23,26 @@ import iconPng from '../../assets/icon.png';
 import { useTheme } from '../../providers/theme';
 import { ShareDialog } from '../ShareDialog';
 
+type ConnectionState = 'connected' | 'idle' | 'disconnected';
+
 interface AppBarProps {
   title?: string;
-  isConnected?: boolean;
+  connectionState?: ConnectionState;
   position?: 'fixed' | 'static';
   roomId?: string | null;
   isOwner?: boolean;
   onTutorialClick?: () => void;
 }
 
+const connectionConfig: Record<ConnectionState, { color: string; label: string }> = {
+  connected: { color: '#4caf50', label: 'Connected' },
+  idle: { color: '#ff9800', label: 'Idle' },
+  disconnected: { color: '#f44336', label: 'Disconnected' },
+};
+
 export function AppBar({
   title = 'System Design Coach',
-  isConnected,
+  connectionState,
   position = 'static',
   roomId,
   isOwner = false,
@@ -134,18 +142,18 @@ export function AppBar({
               </IconButton>
             </Tooltip>
           )}
-          {isConnected !== undefined && (
+          {connectionState !== undefined && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Box
                 sx={{
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  backgroundColor: isConnected ? '#4caf50' : '#f44336',
+                  backgroundColor: connectionConfig[connectionState].color,
                 }}
               />
               <Typography variant="body2">
-                {isConnected ? 'Connected' : 'Disconnected'}
+                {connectionConfig[connectionState].label}
               </Typography>
             </Box>
           )}

@@ -49,6 +49,8 @@ export interface ExcalidrawClientProps {
   theme?: "light" | "dark";
   onConnect?: () => void;
   onDisconnect?: () => void;
+  /** Called when connection becomes idle (no activity for ~20s). Connection may be stale behind CDN. */
+  onIdle?: () => void;
   onSync?: (count: number) => void;
   onSyncError?: (error: Error) => void;
   /** Called for all WebSocket messages, allowing parent to observe traffic */
@@ -402,7 +404,12 @@ export function ExcalidrawClient(
     };
 
     websocketRef.current.onmessage = (event: MessageEvent) => {
+      // Check if we were idle before updating timestamp
+      const wasIdle = (Date.now() - lastActivityRef.current) > CONNECTION_MAX_IDLE_MS;
       lastActivityRef.current = Date.now(); // Track activity
+      if (wasIdle) {
+        props.onConnect?.(); // Transition from idle back to connected
+      }
       try {
         const data: ExcalidrawMessage = JSON.parse(event.data);
         handleWebSocketMessage(data);
@@ -440,6 +447,20 @@ export function ExcalidrawClient(
       }
     };
   }, [excalidrawAPI]);
+
+  // Check for idle state periodically (CDN connections may silently close after ~30s)
+  useEffect(() => {
+    if (!websocketRef.current) return;
+
+    const checkIdle = setInterval(() => {
+      const timeSinceActivity = Date.now() - lastActivityRef.current;
+      if (timeSinceActivity > CONNECTION_MAX_IDLE_MS) {
+        props.onIdle?.();
+      }
+    }, 5000); // Check every 5 seconds
+
+    return () => clearInterval(checkIdle);
+  }, [excalidrawAPI, props.onIdle]);
 
   return (
     <Excalidraw
