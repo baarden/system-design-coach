@@ -112,11 +112,18 @@ export class ChatService {
       });
 
       // Call Claude API
+      logger.info("Calling Claude API for chat", { roomId, userId, model: this.claudeModel });
       const response = await this.aiClient.createMessage({
         model: this.claudeModel,
         maxTokens: 1000,
         system: CHAT_SYSTEM_PROMPT,
         messages: messagesForClaude,
+      });
+      logger.info("Received Claude API response", {
+        roomId,
+        userId,
+        inputTokens: response.usage.inputTokens,
+        outputTokens: response.usage.outputTokens,
       });
 
       await this.usageProvider.recordUsage(userId, {
@@ -154,6 +161,12 @@ export class ChatService {
         message: responseText,
         timestamp: new Date().toISOString(),
       };
+      logger.info("Sending chat-response via WebSocket", {
+        roomId,
+        userId,
+        messageLength: responseText.length,
+        wsReadyState: ws.readyState,
+      });
       ws.send(JSON.stringify(chatResponse));
 
       // Send completed status
@@ -162,6 +175,12 @@ export class ChatService {
         eventId: data.eventId,
         status: "completed",
       };
+      logger.info("Sending status:completed via WebSocket", {
+        roomId,
+        userId,
+        eventId: data.eventId,
+        wsReadyState: ws.readyState,
+      });
       ws.send(JSON.stringify(statusMessage));
     } catch (error) {
       logger.error("Error handling chat message", { error: (error as Error).message });

@@ -48,6 +48,7 @@ export function useWebSocketMessages({
   const handleWebSocketMessage = useCallback(
     (message: unknown) => {
       const data = message as WebSocketMessage;
+
       // Forward chat-related messages to ChatWidget via callback
       if (
         data.type === "chat-history" ||

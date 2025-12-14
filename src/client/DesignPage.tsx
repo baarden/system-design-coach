@@ -150,11 +150,17 @@ function DesignPageContent({
   // When viewing latest step, show Yjs-synced content; otherwise show historical
   const currentStepContent = isViewingLatestStep ? yjsComments : historicalContent;
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [incomingChatMessage, setIncomingChatMessage] = useState<unknown | null>(null);
+  const [chatMessageQueue, setChatMessageQueue] = useState<unknown[]>([]);
   const [isApiReady, setIsApiReady] = useState<boolean>(false);
+
+  // Clear chat message queue when room changes
+  useEffect(() => {
+    setChatMessageQueue([]);
+  }, [roomId]);
   const [tutorialOpen, setTutorialOpen] = useState<boolean>(
     () => localStorage.getItem(TUTORIAL_SEEN_KEY) !== 'true'
   );
+  const [keepAlive, setKeepAlive] = useState(false);
 
   // Panel heights for resizable panels
   const [commentsHeight, setCommentsHeight] = useState<number>(120);
@@ -177,6 +183,7 @@ function DesignPageContent({
   const excalidrawApiRef = useRef<{
     send: (message: unknown) => void;
     syncToBackend: () => Promise<void>;
+    reconnect: () => void;
   } | null>(null);
   const feedbackScrollRef = useRef<HTMLDivElement>(null);
   const problemScrollRef = useRef<HTMLDivElement>(null);
@@ -200,6 +207,21 @@ function DesignPageContent({
     localStorage.setItem(TUTORIAL_SEEN_KEY, 'true');
   }, []);
 
+  // Keep alive handler (session only, resets on page reload)
+  const handleKeepAliveChange = useCallback((value: boolean) => {
+    setKeepAlive(value);
+  }, []);
+
+  // Reconnect handler for manual reconnection
+  const handleReconnect = useCallback(() => {
+    excalidrawApiRef.current?.reconnect();
+  }, []);
+
+  // Memoize sendMessage to prevent unnecessary re-renders of ChatWidget
+  const sendChatMessage = useCallback((message: unknown) => {
+    excalidrawApiRef.current?.send(message);
+  }, []);
+
   // Feedback request hook - use Yjs-synced comments
   const {
     handleGetFeedback,
@@ -218,7 +240,7 @@ function DesignPageContent({
   const messageHandlers = useMemo(
     () => ({
       onChatMessage: (data: unknown) => {
-        setIncomingChatMessage(data);
+        setChatMessageQueue(prev => [...prev, data]);
       },
       onClaudeFeedback: (feedback: string) => {
         setClaudeFeedback(feedback);
@@ -421,6 +443,9 @@ function DesignPageContent({
         roomId={roomId}
         isOwner={isOwner}
         onTutorialClick={() => setTutorialOpen(true)}
+        onReconnect={handleReconnect}
+        keepAlive={keepAlive}
+        onKeepAliveChange={handleKeepAliveChange}
       />
 
       {/* Main Content */}
@@ -474,6 +499,7 @@ function DesignPageContent({
             wsPath={wsPath}
             theme={mode}
             yElements={yElements}
+            keepAlive={keepAlive}
             onConnect={() => setConnectionState('connected')}
             onDisconnect={() => setConnectionState('disconnected')}
             onIdle={() => setConnectionState('idle')}
@@ -624,11 +650,12 @@ function DesignPageContent({
       {/* Chat Widget - only shown to room owner */}
       {isApiReady && isOwner && (
         <ChatWidget
-          sendMessage={(message) => excalidrawApiRef.current?.send(message)}
+          key={roomId}
+          sendMessage={sendChatMessage}
           userId={effectiveUserId}
           onUnavailable={onUnavailable}
-          incomingMessage={incomingChatMessage as Parameters<typeof ChatWidget>[0]["incomingMessage"]}
-          onMessageConsumed={() => setIncomingChatMessage(null)}
+          incomingMessage={chatMessageQueue[0] as Parameters<typeof ChatWidget>[0]["incomingMessage"]}
+          onMessageConsumed={() => setChatMessageQueue(prev => prev.slice(1))}
         />
       )}
 

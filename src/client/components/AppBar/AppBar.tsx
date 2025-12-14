@@ -32,6 +32,9 @@ interface AppBarProps {
   roomId?: string | null;
   isOwner?: boolean;
   onTutorialClick?: () => void;
+  onReconnect?: () => void;
+  keepAlive?: boolean;
+  onKeepAliveChange?: (keepAlive: boolean) => void;
 }
 
 const connectionConfig: Record<ConnectionState, { color: string; label: string }> = {
@@ -47,6 +50,9 @@ export function AppBar({
   roomId,
   isOwner = false,
   onTutorialClick,
+  onReconnect,
+  keepAlive,
+  onKeepAliveChange,
 }: AppBarProps) {
   const navigate = useNavigate();
   const { mode, toggleTheme } = useTheme();
@@ -143,19 +149,34 @@ export function AppBar({
             </Tooltip>
           )}
           {connectionState !== undefined && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Tooltip
+              title={connectionState !== 'connected' && onReconnect ? 'Click to reconnect' : ''}
+            >
               <Box
+                onClick={connectionState !== 'connected' && onReconnect ? onReconnect : undefined}
                 sx={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  backgroundColor: connectionConfig[connectionState].color,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  ...(connectionState !== 'connected' && onReconnect && {
+                    cursor: 'pointer',
+                    '&:hover': { opacity: 0.8 },
+                  }),
                 }}
-              />
-              <Typography variant="body2">
-                {connectionConfig[connectionState].label}
-              </Typography>
-            </Box>
+              >
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    backgroundColor: connectionConfig[connectionState].color,
+                  }}
+                />
+                <Typography variant="body2">
+                  {connectionConfig[connectionState].label}
+                </Typography>
+              </Box>
+            </Tooltip>
           )}
           <AuthUI />
         </Box>
@@ -166,6 +187,8 @@ export function AppBar({
           open={shareOpen}
           onClose={() => setShareOpen(false)}
           roomId={roomId}
+          keepAlive={keepAlive}
+          onKeepAliveChange={onKeepAliveChange}
         />
       )}
     </MuiAppBar>

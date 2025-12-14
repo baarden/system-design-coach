@@ -60,6 +60,7 @@ export interface ExcalidrawClientProps {
     api: {
       send: (message: unknown) => void;
       syncToBackend: () => Promise<void>;
+      reconnect: () => void;
       excalidrawAPI: ExcalidrawImperativeAPI;
     },
     initialElements: ServerElement[]
@@ -72,6 +73,8 @@ export interface ExcalidrawClientProps {
   yElements?: Y.Array<unknown> | null;
   /** Throttle Yjs sync updates in milliseconds. Higher = fewer updates, less real-time. Default: 100ms. Set to 0 for no throttling. */
   yjsThrottleMs?: number;
+  /** Keep connection alive even when idle. Use when waiting for collaborators. */
+  keepAlive?: boolean;
 }
 
 // Helper function to clean elements for Excalidraw
@@ -156,6 +159,7 @@ export function ExcalidrawClient(
   const isApplyingRemoteRef = useRef(false);
   // Track WebSocket activity for stale connection detection (CDN idle timeouts)
   const lastActivityRef = useRef<number>(Date.now());
+  const isIdleRef = useRef(false); // Track if we've notified about idle state
   const CONNECTION_MAX_IDLE_MS = 20000; // 20 seconds
 
   excalidrawAPIRef.current = excalidrawAPI;
@@ -217,16 +221,30 @@ export function ExcalidrawClient(
   const send = (message: unknown): void => {
     const now = Date.now();
     const timeSinceActivity = now - lastActivityRef.current;
+    const isOpen = websocketRef.current?.readyState === WebSocket.OPEN;
+    const needsReconnect =
+      !isOpen || timeSinceActivity > CONNECTION_MAX_IDLE_MS;
 
-    // If connection is stale, reconnect before sending
-    if (timeSinceActivity > CONNECTION_MAX_IDLE_MS && websocketRef.current) {
-      websocketRef.current.close();
-      // connectWebSocket will be called by onclose handler, queue the message
+    // If connection is closed/stale, reconnect before sending
+    if (needsReconnect) {
+      // Close stale connection if still open
+      if (websocketRef.current?.readyState === WebSocket.OPEN) {
+        websocketRef.current.close();
+      }
+
+      // Reset idle state since user is taking action
+      isIdleRef.current = false;
+      connectWebSocket();
+
+      // Queue message to send once connected
       const waitForConnection = (): void => {
         if (websocketRef.current?.readyState === WebSocket.OPEN) {
           lastActivityRef.current = Date.now();
           websocketRef.current.send(JSON.stringify(message));
-        } else if (websocketRef.current?.readyState === WebSocket.CONNECTING) {
+        } else if (
+          websocketRef.current?.readyState === WebSocket.CONNECTING ||
+          !websocketRef.current
+        ) {
           setTimeout(waitForConnection, 50);
         }
       };
@@ -234,10 +252,8 @@ export function ExcalidrawClient(
       return;
     }
 
-    if (websocketRef.current?.readyState === WebSocket.OPEN) {
-      lastActivityRef.current = now;
-      websocketRef.current.send(JSON.stringify(message));
-    }
+    lastActivityRef.current = now;
+    websocketRef.current!.send(JSON.stringify(message));
   };
 
   const syncToBackend = async (): Promise<void> => {
@@ -270,6 +286,20 @@ export function ExcalidrawClient(
     }
   };
 
+  const reconnect = (): void => {
+    // Reset idle state and force reconnection
+    isIdleRef.current = false;
+    lastActivityRef.current = Date.now();
+
+    // Close existing connection if any
+    if (websocketRef.current) {
+      websocketRef.current.close();
+    }
+
+    // Reconnect
+    connectWebSocket();
+  };
+
   const handleWebSocketMessage = async (
     data: ExcalidrawMessage
   ): Promise<void> => {
@@ -298,7 +328,7 @@ export function ExcalidrawClient(
           if (!readyFiredRef.current) {
             readyFiredRef.current = true;
             props.onReady?.(
-              { send, syncToBackend, excalidrawAPI },
+              { send, syncToBackend, reconnect, excalidrawAPI },
               elements
             );
           }
@@ -399,15 +429,17 @@ export function ExcalidrawClient(
 
     websocketRef.current.onopen = () => {
       lastActivityRef.current = Date.now(); // Fresh connection
+      isIdleRef.current = false; // Reset idle state
       props.onConnect?.();
       // Note: onReady is NOT fired here. It fires after initial_elements arrives.
     };
 
     websocketRef.current.onmessage = (event: MessageEvent) => {
       // Check if we were idle before updating timestamp
-      const wasIdle = (Date.now() - lastActivityRef.current) > CONNECTION_MAX_IDLE_MS;
+      const wasIdle = isIdleRef.current;
       lastActivityRef.current = Date.now(); // Track activity
       if (wasIdle) {
+        isIdleRef.current = false;
         props.onConnect?.(); // Transition from idle back to connected
       }
       try {
@@ -419,9 +451,17 @@ export function ExcalidrawClient(
     };
 
     websocketRef.current.onclose = (event: CloseEvent) => {
-      props.onDisconnect?.();
       readyFiredRef.current = false; // Reset so onReady fires again on reconnect
 
+      // If we were idle, don't notify or auto-reconnect - wait for user action
+      // This avoids unnecessary reconnect cycles for tabs left open in background
+      if (isIdleRef.current) {
+        return;
+      }
+
+      props.onDisconnect?.();
+
+      // Auto-reconnect only for unexpected disconnections (not idle, not clean close)
       if (event.code !== 1000 && mountedRef.current) {
         setTimeout(connectWebSocket, 3000);
       }
@@ -449,18 +489,21 @@ export function ExcalidrawClient(
   }, [excalidrawAPI]);
 
   // Check for idle state periodically (CDN connections may silently close after ~30s)
+  // Skip idle detection if keepAlive is enabled - user wants to stay connected for collaborators
   useEffect(() => {
-    if (!websocketRef.current) return;
+    if (!websocketRef.current || props.keepAlive) return;
 
     const checkIdle = setInterval(() => {
       const timeSinceActivity = Date.now() - lastActivityRef.current;
-      if (timeSinceActivity > CONNECTION_MAX_IDLE_MS) {
+      // Only fire onIdle once when transitioning to idle state
+      if (timeSinceActivity > CONNECTION_MAX_IDLE_MS && !isIdleRef.current) {
+        isIdleRef.current = true;
         props.onIdle?.();
       }
     }, 5000); // Check every 5 seconds
 
     return () => clearInterval(checkIdle);
-  }, [excalidrawAPI, props.onIdle]);
+  }, [excalidrawAPI, props.onIdle, props.keepAlive]);
 
   return (
     <Excalidraw

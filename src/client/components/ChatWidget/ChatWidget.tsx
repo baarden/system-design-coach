@@ -61,6 +61,11 @@ export default function ChatWidget({
     const data = incomingMessage;
 
     if (data.type === "chat-history" && data.messages) {
+      // Skip chat-history if we have a pending message - don't clobber current state
+      if (pendingMessageIdRef.current) {
+        onMessageConsumed?.();
+        return;
+      }
       // Convert server messages to react-chatbot-kit format
       const formattedMessages: ChatbotMessage[] = data.messages.map((msg, index) => ({
         message: msg.content,

@@ -12,6 +12,8 @@ import {
   Snackbar,
   Alert,
   Tooltip,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -21,9 +23,17 @@ interface ShareDialogProps {
   open: boolean;
   onClose: () => void;
   roomId: string;
+  keepAlive?: boolean;
+  onKeepAliveChange?: (keepAlive: boolean) => void;
 }
 
-export function ShareDialog({ open, onClose, roomId }: ShareDialogProps) {
+export function ShareDialog({
+  open,
+  onClose,
+  roomId,
+  keepAlive,
+  onKeepAliveChange,
+}: ShareDialogProps) {
   const [shareUrl, setShareUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -124,6 +134,22 @@ export function ShareDialog({ open, onClose, roomId }: ShareDialogProps) {
                   (Invalidates existing share links)
                 </Typography>
               </Box>
+              {onKeepAliveChange && (
+                <Box sx={{ mt: 3 }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={keepAlive ?? false}
+                        onChange={(e) => onKeepAliveChange(e.target.checked)}
+                      />
+                    }
+                    label="Keep connection alive"
+                  />
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 6 }}>
+                    Stay connected while waiting for collaborators to join
+                  </Typography>
+                </Box>
+              )}
             </Box>
           )}
         </DialogContent>
