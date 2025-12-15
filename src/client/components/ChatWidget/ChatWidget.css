@@ -15,6 +15,11 @@
   background-color: #121212;
 }
 
+/* Space between message bubbles */
+.cs-message {
+  margin-bottom: 0.75em !important;
+}
+
 /* Incoming messages (bot) - left aligned */
 .cs-message--incoming .cs-message__content-wrapper {
   align-items: flex-start;
@@ -115,27 +120,50 @@
   background-color: #aaa;
 }
 
+/* Override chat-ui-kit message content spacing */
+.cs-message__custom-content {
+  line-height: 1.35 !important;
+}
+
+.cs-message__custom-content * {
+  line-height: inherit !important;
+}
+
 /* Markdown styles in bot messages */
 .chat-bot-message-markdown {
   text-align: left;
+  line-height: 1.35 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5em !important;
 }
 
 .chat-bot-message-markdown p {
-  margin: 0 0 0.5em 0;
-}
-
-.chat-bot-message-markdown p:last-child {
-  margin-bottom: 0;
+  margin: 0 !important;
+  line-height: 1.35 !important;
 }
 
 .chat-bot-message-markdown ul,
 .chat-bot-message-markdown ol {
-  margin: 0.5em 0;
-  padding-left: 1.5em;
+  margin: 0 !important;
+  padding-left: 1.2em;
+  line-height: 1.35 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.1em !important;
 }
 
+.cs-message__custom-content .chat-bot-message-markdown ul li,
+.cs-message__custom-content .chat-bot-message-markdown ol li,
 .chat-bot-message-markdown li {
-  margin: 0.25em 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.35 !important;
+}
+
+/* Handle paragraphs inside list items (created when markdown has blank lines between items) */
+.chat-bot-message-markdown li p {
+  margin: 0 !important;
 }
 
 .chat-bot-message-markdown code {
