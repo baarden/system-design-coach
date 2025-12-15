@@ -13,6 +13,7 @@ const noopValue: AuthContextValue = {
   signOut: () => {},
   reloadUser: () => {},
   onUnavailable: () => {},
+  checkAvailability: async () => true,
 };
 
 interface NoopAuthProviderProps {

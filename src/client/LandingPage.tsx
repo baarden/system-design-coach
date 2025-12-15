@@ -30,7 +30,7 @@ function groupByCategory(problems: Problem[]): Map<string, Problem[]> {
 
 function LandingPage() {
   const navigate = useNavigate();
-  const { isSignedIn, userId, signIn } = useAuth();
+  const { isSignedIn, userId, signIn, checkAvailability } = useAuth();
   const [problems, setProblems] = useState<Problem[]>([]);
 
   // Fetch problems from server on mount
@@ -46,9 +46,14 @@ function LandingPage() {
       });
   }, []);
 
-  const handleProblemClick = (problemId: string) => {
+  const handleProblemClick = async (problemId: string) => {
     if (!isSignedIn) {
       signIn();
+      return;
+    }
+
+    const available = await checkAvailability();
+    if (!available) {
       return;
     }
 

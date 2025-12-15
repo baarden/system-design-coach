@@ -11,4 +11,5 @@ export interface AuthContextValue {
   signOut: () => void;
   reloadUser: () => void;
   onUnavailable: () => void;
+  checkAvailability: () => Promise<boolean>;
 }
