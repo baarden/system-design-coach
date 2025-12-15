@@ -37,6 +37,7 @@ export interface NextPromptMessage {
 export interface ConversationRestoreMessage {
   type: "conversation_restore";
   latestFeedback: string;
+  currentProblemStatement?: string;
   timestamp: string;
 }
 

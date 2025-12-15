@@ -89,6 +89,11 @@ export function setupWebSocketHandlers(deps: WebSocketHandlerDependencies): void
     // Set up Yjs update broadcasting for this room
     yjsDocManager.setupUpdateBroadcasting(roomId);
 
+    // Get elements from Redis and initialize Y.Doc if empty (for persistence recovery)
+    const elements = await stateManager.getElements(roomId);
+    const elementsArray = Array.from(elements.values());
+    yjsDocManager.initializeFromElements(roomId, elementsArray);
+
     // Send initial Yjs sync (SyncStep1) to new client
     const yjsSyncStep1 = yjsDocManager.handleClientConnect(ws, roomId);
     ws.send(JSON.stringify({
@@ -97,8 +102,6 @@ export function setupWebSocketHandlers(deps: WebSocketHandlerDependencies): void
     }));
 
     // Send current elements to new client (for backwards compatibility)
-    const elements = await stateManager.getElements(roomId);
-    const elementsArray = Array.from(elements.values());
     // Strip 'index' property to let Excalidraw regenerate valid fractional indices
     // This avoids InvalidFractionalIndexError when bound elements have invalid index ordering
     const elementsWithoutIndex = elementsArray.map(({ index, ...rest }: any) => rest);
@@ -124,12 +127,15 @@ export function setupWebSocketHandlers(deps: WebSocketHandlerDependencies): void
         (m) => m.role === "assistant" && m.source === "feedback"
       );
       // Skip if only initial problem statement exists (first feedback message)
-      if (feedbackMessages.length > 1) {
+      if (feedbackMessages.length > 1 || conversation.currentProblemStatement) {
         const latestFeedback =
-          feedbackMessages[feedbackMessages.length - 1].content;
+          feedbackMessages.length > 1
+            ? feedbackMessages[feedbackMessages.length - 1].content
+            : undefined;
         const restoreMessage = {
           type: "conversation_restore",
           latestFeedback,
+          currentProblemStatement: conversation.currentProblemStatement,
           timestamp: new Date().toISOString(),
         };
         ws.send(JSON.stringify(restoreMessage));

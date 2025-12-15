@@ -28,5 +28,6 @@ export interface AsyncStateManager {
   addMessage(roomId: string, message: ConversationMessage): Promise<void>;
   getPreviousElements(roomId: string): Promise<ElementsObject>;
   setPreviousElements(roomId: string, elements: ElementsObject): Promise<void>;
+  setCurrentProblemStatement(roomId: string, statement: string): Promise<void>;
   clearConversation(roomId: string): Promise<void>;
 }

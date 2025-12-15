@@ -69,6 +69,9 @@ export function useWebSocketMessages({
         if (restoreMsg.latestFeedback) {
           handlers.onClaudeFeedback(restoreMsg.latestFeedback);
         }
+        if (restoreMsg.currentProblemStatement) {
+          handlers.onNextPrompt(restoreMsg.currentProblemStatement);
+        }
         return;
       }
 

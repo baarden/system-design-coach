@@ -20,6 +20,7 @@ export class AnthropicAdapter implements AIClient {
       system: request.system,
       messages: request.messages,
       tools: request.tools,
+      tool_choice: request.toolChoice,
     });
 
     // Map SDK content blocks to our simplified types

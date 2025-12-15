@@ -50,6 +50,14 @@ export interface AIUsage {
 }
 
 /**
+ * Tool choice configuration
+ */
+export type AIToolChoice =
+  | { type: "auto" }
+  | { type: "any" }
+  | { type: "tool"; name: string };
+
+/**
  * Request to create a message
  */
 export interface AIMessageRequest {
@@ -58,6 +66,7 @@ export interface AIMessageRequest {
   system: string;
   messages: AIMessage[];
   tools?: AITool[];
+  toolChoice?: AIToolChoice;
 }
 
 /**

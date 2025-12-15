@@ -305,6 +305,27 @@ describe("MultiRoomStateManager", () => {
       });
     });
 
+    describe("setCurrentProblemStatement", () => {
+      it("updates current problem statement in conversation", async () => {
+        await manager.initializeConversation(
+          "room1",
+          "problem1",
+          "Test statement"
+        );
+
+        await manager.setCurrentProblemStatement("room1", "Updated problem");
+
+        const state = await manager.getConversation("room1");
+        expect(state?.currentProblemStatement).toBe("Updated problem");
+      });
+
+      it("throws error for non-existent conversation", async () => {
+        await expect(
+          manager.setCurrentProblemStatement("nonExistent", "Test")
+        ).rejects.toThrow("No conversation state for room: nonExistent");
+      });
+    });
+
     describe("clearConversation", () => {
       it("removes conversation state", async () => {
         await manager.initializeConversation(

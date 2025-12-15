@@ -35,6 +35,8 @@ export interface RoomConversationState {
   messages: ConversationMessage[];
   previousElements: ElementsObject;
   problemId: string;
+  /** Current problem statement, updated when Claude provides a next_prompt */
+  currentProblemStatement?: string;
 }
 
 export type { Operation };

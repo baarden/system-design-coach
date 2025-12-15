@@ -116,6 +116,25 @@ describe("useWebSocketMessages", () => {
     expect(mockHandlers.onClaudeFeedback).toHaveBeenCalledWith("Previous feedback");
   });
 
+  it("handles conversation_restore with currentProblemStatement", () => {
+    const { result } = renderHook(() =>
+      useWebSocketMessages({
+        pendingEventIdRef,
+        handlers: mockHandlers,
+      })
+    );
+
+    result.current.handleWebSocketMessage({
+      type: "conversation_restore",
+      latestFeedback: "Previous feedback",
+      currentProblemStatement: "Updated problem statement",
+      timestamp: "123",
+    });
+
+    expect(mockHandlers.onClaudeFeedback).toHaveBeenCalledWith("Previous feedback");
+    expect(mockHandlers.onNextPrompt).toHaveBeenCalledWith("Updated problem statement");
+  });
+
   it("handles status completed messages matching pending eventId", () => {
     pendingEventIdRef.current = "event-123";
 

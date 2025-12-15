@@ -107,6 +107,14 @@ export class MultiRoomStateManager implements AsyncStateManager {
     state.previousElements = elements;
   }
 
+  async setCurrentProblemStatement(roomId: string, statement: string): Promise<void> {
+    const state = this.conversations.get(roomId);
+    if (!state) {
+      throw new Error(`No conversation state for room: ${roomId}`);
+    }
+    state.currentProblemStatement = statement;
+  }
+
   async clearConversation(roomId: string): Promise<void> {
     this.conversations.delete(roomId);
   }

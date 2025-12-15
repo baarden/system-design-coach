@@ -189,6 +189,7 @@ export class FeedbackService {
         maxTokens: 1000,
         system: SYSTEM_PROMPT_TEMPLATE(problem.statement),
         tools: [feedbackTool],
+        toolChoice: { type: "tool", name: "give_system_design_feedback" },
         messages: messagesForClaude,
       });
 
@@ -206,6 +207,13 @@ export class FeedbackService {
         !toolUseBlock ||
         toolUseBlock.name !== "give_system_design_feedback"
       ) {
+        logger.error("Claude did not use expected tool", {
+          roomId,
+          contentTypes: response.content.map((b) => b.type),
+          textContent: response.content
+            .filter((b): b is { type: "text"; text: string } => b.type === "text")
+            .map((b) => b.text.substring(0, 500)),
+        });
         throw new Error("Expected tool use response from Claude");
       }
 
@@ -235,6 +243,19 @@ export class FeedbackService {
       // Update previous elements for next diff
       await this.stateManager.setPreviousElements(roomId, currentElementsObj);
 
+      // Sync Y.Doc elements to Redis for persistence (enables recovery on restart)
+      // First, remove elements that no longer exist in Y.Doc
+      const currentIds = new Set(elements.map((el) => el.id));
+      const storedElements = await this.stateManager.getElements(roomId);
+      const deletePromises = Array.from(storedElements.keys())
+        .filter((id) => !currentIds.has(id))
+        .map((id) => this.stateManager.deleteElement(id, roomId));
+      // Then save all current elements
+      const savePromises = elements.map((el) =>
+        this.stateManager.setElement(el.id, el, roomId)
+      );
+      await Promise.all([...deletePromises, ...savePromises]);
+
       // Create numbered labels for diagram changes
       const newElements = await this.createLabelElements(roomId, diagram_changes);
 
@@ -256,8 +277,9 @@ export class FeedbackService {
       };
       this.broadcaster.broadcast(feedbackMessage, roomId);
 
-      // Broadcast next_prompt if present
+      // Broadcast and persist next_prompt if present
       if (next_prompt) {
+        await this.stateManager.setCurrentProblemStatement(roomId, next_prompt);
         const nextPromptMessage: NextPromptMessage = {
           type: "next-prompt",
           nextPrompt: next_prompt,

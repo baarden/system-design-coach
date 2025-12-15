@@ -144,6 +144,24 @@ export class RedisStateManager implements AsyncStateManager {
     await this.redis.eval(script, 1, key, elementsJson);
   }
 
+  async setCurrentProblemStatement(roomId: string, statement: string): Promise<void> {
+    const key = this.conversationKey(roomId);
+
+    // Lua script for atomic read-modify-write
+    const script = `
+      local current = redis.call('GET', KEYS[1])
+      if not current then
+        return redis.error_reply('No conversation state for room')
+      end
+      local state = cjson.decode(current)
+      state.currentProblemStatement = ARGV[1]
+      redis.call('SET', KEYS[1], cjson.encode(state))
+      return 'OK'
+    `;
+
+    await this.redis.eval(script, 1, key, statement);
+  }
+
   async clearConversation(roomId: string): Promise<void> {
     await this.redis.del(this.conversationKey(roomId));
   }
