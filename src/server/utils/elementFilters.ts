@@ -43,6 +43,7 @@ type ExcalidrawElement = ServerElement & {
   endBinding?: ArrowBinding | null;
   startArrowhead?: string | null;
   endArrowhead?: string | null;
+  isDeleted?: boolean;
 };
 
 /**
@@ -53,7 +54,8 @@ type ExcalidrawElement = ServerElement & {
 export function filterElementsForClaude(
   elements: ServerElement[]
 ): SimplifiedElement[] {
-  const elArray = elements as ExcalidrawElement[];
+  // Filter out deleted elements first
+  const elArray = (elements as ExcalidrawElement[]).filter((el) => !el.isDeleted);
 
   // Step 1: Build lookup maps
   const elementById = new Map<string, ExcalidrawElement>();
