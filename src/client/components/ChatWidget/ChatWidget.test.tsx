@@ -3,18 +3,29 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ChatWidget from "./ChatWidget";
 
-// Mock react-chatbot-kit since it has complex internal state
-vi.mock("react-chatbot-kit", () => ({
-  default: ({ placeholderText }: { placeholderText: string }) => (
-    <div data-testid="chatbot-mock">
-      <input placeholder={placeholderText} data-testid="chat-input" />
-    </div>
+// Mock @chatscope components
+vi.mock("@chatscope/chat-ui-kit-react", () => ({
+  ChatContainer: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="chat-container">{children}</div>
   ),
-  createChatBotMessage: (text: string) => ({
-    message: text,
-    type: "bot",
-    id: Math.random(),
-  }),
+  MessageList: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="message-list">{children}</div>
+  ),
+  Message: Object.assign(
+    ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="message">{children}</div>
+    ),
+    {
+      CustomContent: ({ children }: { children: React.ReactNode }) => (
+        <div>{children}</div>
+      ),
+      TextContent: ({ text }: { text: string }) => <div>{text}</div>,
+    }
+  ),
+  MessageInput: ({ placeholder }: { placeholder: string }) => (
+    <input placeholder={placeholder} data-testid="message-input" />
+  ),
+  TypingIndicator: () => <div data-testid="typing-indicator" />,
 }));
 
 // Mock theme provider
@@ -58,7 +69,7 @@ describe("ChatWidget", () => {
       await user.click(screen.getByLabelText("chat"));
 
       expect(screen.getByText("System Design Assistant")).toBeInTheDocument();
-      expect(screen.getByTestId("chatbot-mock")).toBeInTheDocument();
+      expect(screen.getByTestId("chat-container")).toBeInTheDocument();
     });
 
     it("hides FAB when chat is open", async () => {
@@ -78,8 +89,8 @@ describe("ChatWidget", () => {
       await user.click(screen.getByLabelText("chat"));
       expect(screen.getByText("System Design Assistant")).toBeInTheDocument();
 
-      // Close chat
-      const closeButton = screen.getByRole("button", { name: "" }); // Close icon button
+      // Close chat - find the IconButton in the header
+      const closeButton = screen.getByRole("button", { name: "" });
       await user.click(closeButton);
 
       // FAB should be visible again
@@ -159,7 +170,7 @@ describe("ChatWidget", () => {
       expect(screen.getByText("System Design Assistant")).toBeInTheDocument();
     });
 
-    it("renders chatbot with correct placeholder", async () => {
+    it("renders message input with correct placeholder", async () => {
       const user = userEvent.setup();
       render(<ChatWidget {...defaultProps} />);
 
