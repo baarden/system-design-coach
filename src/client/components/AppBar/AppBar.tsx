@@ -100,6 +100,22 @@ export function AppBar({
               checked={mode === 'dark'}
               onChange={toggleTheme}
               onClick={(e) => e.stopPropagation()}
+              sx={mode === 'dark' ? {
+                '& .MuiSwitch-switchBase.Mui-checked': {
+                  color: '#fff',
+                },
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                  backgroundColor: '#90caf9',
+                  opacity: 0.7,
+                },
+                '& .MuiSwitch-switchBase': {
+                  color: '#e0e0e0',
+                },
+                '& .MuiSwitch-track': {
+                  backgroundColor: '#aaa',
+                  opacity: 0.5,
+                },
+              } : undefined}
             />
           </MenuItem>
           <MenuItem onClick={handleGitHubClick}>
