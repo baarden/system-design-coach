@@ -10,6 +10,7 @@ vi.mock("../providers/auth", () => ({
     isSignedIn: true,
     userId: "test-user",
     signIn: vi.fn(),
+    checkAvailability: vi.fn().mockResolvedValue(true),
   }),
   AuthUI: () => <div data-testid="auth-ui">Auth UI</div>,
 }));

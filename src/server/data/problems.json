@@ -57,6 +57,27 @@
       "statement": "Design a workflow orchestration system like Airflow or Temporal.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How users define workflows and task dependencies (DAGs)\n- How tasks are scheduled and executed by workers\n- Your choice of database(s) for workflow state and metadata\n- How you handle task failures and retries\n- How users monitor workflow execution and view logs\n\nFocus on core orchestration functionality. We'll explore distributed execution, backfilling, and advanced scheduling in follow-up questions."
     },
     {
+      "id": "image-board",
+      "category": "Front-End Systems",
+      "title": "**Image Board** (Pinterest/Houzz)",
+      "description": "Design a visual discovery platform with infinite scrolling, collections, and image interactions.",
+      "statement": "Design a front-end system for an **image board application** where users can browse, save, and organize visual content.\n\nYour design should support:\n- Displaying thousands of images efficiently\n- User interactions (saving, organizing into collections)\n- Infinite scrolling and search\n- Real-time updates when content changes\n\n**Draw a diagram** showing your key UI components, state management approach, data flow, and storage strategy. Label the connections between components and **describe** how your system handles image loading, user actions, and performance optimization."
+    },
+    {
+      "id": "project-management-tools",
+      "category": "Front-End Systems",
+      "title": "**Project Management Tools** (Trello/Asana)",
+      "description": "Design a collaborative workspace with tasks, boards, and real-time updates.",
+      "statement": "Design a front-end system for a **project management application** where teams collaborate on tasks and projects.\n\nYour design should support:\n- Organizing tasks across multiple views (boards, lists, calendars)\n- Drag-and-drop interactions with immediate feedback\n- Real-time collaboration with multiple users\n- Complex nested data (projects → lists → tasks → subtasks)\n- Filtering, searching, and permissions\n\n**Draw a diagram** showing your state management strategy, data synchronization approach, and how UI updates propagate. Label data flows and **describe** how your system handles concurrent edits, optimistic updates, and state consistency."
+    },
+    {
+      "id": "email-client",
+      "category": "Front-End Systems",
+      "title": "**Email client** (Gmail, Outlook Web)",
+      "description": "Design a responsive email interface with threading, folders, composition, and sync.",
+      "statement": "Design a front-end system for an **email client** where users manage large volumes of messages and conversations.\n\nYour design should support:\n- Displaying and navigating thousands of emails efficiently\n- Multiple views (inbox, folders, labels, search results)\n- Composing emails with drafts and auto-save\n- Read/unread states and bulk actions\n- Real-time syncing of new messages\n- Offline access and conflict resolution\n\n**Draw a diagram** showing your state management architecture, caching strategy, and data synchronization. Label data flows and **describe** how your system handles state updates, optimistic UI changes, and maintaining consistency across views."
+    },
+    {
       "id": "chat-application",
       "category": "Communication and Messaging",
       "title": "**Chat Application** (WhatsApp/Slack)",

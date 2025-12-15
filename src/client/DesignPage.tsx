@@ -607,42 +607,60 @@ function DesignPageContent({
           />
           {/* TextField with embedded step selector in border */}
           <Box sx={{ position: "relative", height: "100%" }}>
-            {/* Step Dropdown - embedded in border like a label */}
-            <Select
-              size="small"
-              value={isViewingCurrent ? totalRounds : viewingStepNumber}
-              onChange={(e) => selectStep(Number(e.target.value))}
-              variant="standard"
-              disableUnderline
-              sx={{
-                position: "absolute",
-                top: -10,
-                left: 8,
-                zIndex: 1,
-                backgroundColor: "background.paper",
-                px: 0.5,
-                fontSize: "0.75rem",
-                "& .MuiSelect-select": {
-                  py: 0,
-                  pr: "20px !important",
+            {/* Step Dropdown - only shown when there are historical steps (totalRounds >= 2) */}
+            {totalRounds >= 2 ? (
+              <Select
+                size="small"
+                value={isViewingCurrent ? totalRounds : viewingStepNumber}
+                onChange={(e) => selectStep(Number(e.target.value))}
+                variant="standard"
+                disableUnderline
+                sx={{
+                  position: "absolute",
+                  top: -10,
+                  left: 8,
+                  zIndex: 1,
+                  backgroundColor: "background.paper",
+                  px: 0.5,
                   fontSize: "0.75rem",
-                  color: isViewingCurrent ? "text.secondary" : "warning.main",
-                },
-                "& .MuiSvgIcon-root": {
-                  fontSize: "1rem",
-                  right: 0,
-                },
-              }}
-            >
-              {commentSteps.map((step) => (
-                <MenuItem key={step.stepNumber} value={step.stepNumber} sx={{ fontSize: "0.875rem" }}>
-                  User comments [step {step.stepNumber}]
+                  "& .MuiSelect-select": {
+                    py: 0,
+                    pr: "20px !important",
+                    fontSize: "0.75rem",
+                    color: isViewingCurrent ? "text.secondary" : "warning.main",
+                  },
+                  "& .MuiSvgIcon-root": {
+                    fontSize: "1rem",
+                    right: 0,
+                  },
+                }}
+              >
+                {commentSteps.map((step) => (
+                  <MenuItem key={step.stepNumber} value={step.stepNumber} sx={{ fontSize: "0.875rem" }}>
+                    User comments [step {step.stepNumber}]
+                  </MenuItem>
+                ))}
+                <MenuItem value={totalRounds} sx={{ fontSize: "0.875rem" }}>
+                  User comments [step {totalRounds}] (current)
                 </MenuItem>
-              ))}
-              <MenuItem value={totalRounds} sx={{ fontSize: "0.875rem" }}>
-                User comments [step {totalRounds}]{commentSteps.length > 0 ? " (current)" : ""}
-              </MenuItem>
-            </Select>
+              </Select>
+            ) : (
+              <Box
+                component="span"
+                sx={{
+                  position: "absolute",
+                  top: -9,
+                  left: 8,
+                  px: 0.5,
+                  backgroundColor: "background.paper",
+                  color: "text.secondary",
+                  fontSize: "0.75rem",
+                  zIndex: 1,
+                }}
+              >
+                User comments
+              </Box>
+            )}
 
             {/* TextField - uses Yjs for real-time collaboration */}
             <TextField
