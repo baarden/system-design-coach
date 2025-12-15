@@ -319,6 +319,22 @@ describe("MultiRoomStateManager", () => {
         expect(state?.currentProblemStatement).toBe("Updated problem");
       });
 
+      it("appends to problem statement history", async () => {
+        await manager.initializeConversation(
+          "room1",
+          "problem1",
+          "Test statement"
+        );
+
+        await manager.setCurrentProblemStatement("room1", "First update");
+        await manager.setCurrentProblemStatement("room1", "Second update");
+
+        const state = await manager.getConversation("room1");
+        expect(state?.problemStatementHistory).toHaveLength(2);
+        expect(state?.problemStatementHistory?.[0].content).toBe("First update");
+        expect(state?.problemStatementHistory?.[1].content).toBe("Second update");
+      });
+
       it("throws error for non-existent conversation", async () => {
         await expect(
           manager.setCurrentProblemStatement("nonExistent", "Test")

@@ -1,6 +1,11 @@
 import { ReactNode, RefObject } from "react";
-import { Box, Typography, useTheme } from "@mui/material";
+import { Box, Typography, useTheme, Select, MenuItem } from "@mui/material";
 import ReactMarkdown from "react-markdown";
+
+interface StepInfo {
+  stepNumber: number;
+  content: string;
+}
 
 interface ResizableMarkdownPanelProps {
   label: string;
@@ -15,6 +20,14 @@ interface ResizableMarkdownPanelProps {
    */
   dragHandlePosition?: "top" | "bottom";
   children?: ReactNode;
+  /**
+   * Optional step navigation - when provided, shows a dropdown instead of static label
+   */
+  steps?: StepInfo[];
+  totalSteps?: number;
+  currentStep?: number;
+  isViewingLatest?: boolean;
+  onStepSelect?: (stepNumber: number) => void;
 }
 
 /**
@@ -29,9 +42,15 @@ export function ResizableMarkdownPanel({
   hasScrollBottom,
   onDragStart,
   dragHandlePosition = "bottom",
+  steps,
+  totalSteps,
+  currentStep,
+  isViewingLatest,
+  onStepSelect,
 }: ResizableMarkdownPanelProps) {
   const theme = useTheme();
   const hasContent = content?.trim();
+  const showDropdown = steps && totalSteps !== undefined && totalSteps > 0 && onStepSelect;
 
   const bgColor = theme.palette.background.paper;
 
@@ -74,22 +93,62 @@ export function ResizableMarkdownPanel({
         backgroundColor: hasContent ? "transparent" : "action.hover",
       }}
     >
-      {/* Label */}
-      <Typography
-        variant="caption"
-        sx={{
-          position: "absolute",
-          top: -9,
-          left: 8,
-          px: 0.5,
-          backgroundColor: "background.paper",
-          color: "text.secondary",
-          fontSize: "0.75rem",
-          zIndex: 1,
-        }}
-      >
-        {label}
-      </Typography>
+      {/* Label or Step Dropdown */}
+      {showDropdown ? (
+        <Select
+          size="small"
+          value={currentStep}
+          onChange={(e) => onStepSelect(Number(e.target.value))}
+          variant="standard"
+          disableUnderline
+          sx={{
+            position: "absolute",
+            top: -10,
+            left: 8,
+            zIndex: 2,
+            backgroundColor: "background.paper",
+            px: 0.5,
+            fontSize: "0.75rem",
+            "& .MuiSelect-select": {
+              py: 0,
+              pr: 2,
+              color: isViewingLatest ? "text.secondary" : "warning.main",
+            },
+            "& .MuiSvgIcon-root": {
+              fontSize: "1rem",
+              color: isViewingLatest ? "text.secondary" : "warning.main",
+            },
+          }}
+        >
+          {steps.map((step) => (
+            <MenuItem key={step.stepNumber} value={step.stepNumber} sx={{ fontSize: "0.875rem" }}>
+              {label} [step {step.stepNumber}]
+            </MenuItem>
+          ))}
+          {/* Current step (if there are historical steps) */}
+          {steps.length > 0 && steps.length < totalSteps && (
+            <MenuItem value={totalSteps} sx={{ fontSize: "0.875rem" }}>
+              {label} [step {totalSteps}] (current)
+            </MenuItem>
+          )}
+        </Select>
+      ) : (
+        <Typography
+          variant="caption"
+          sx={{
+            position: "absolute",
+            top: -9,
+            left: 8,
+            px: 0.5,
+            backgroundColor: "background.paper",
+            color: "text.secondary",
+            fontSize: "0.75rem",
+            zIndex: 1,
+          }}
+        >
+          {label}
+        </Typography>
+      )}
 
       {/* Content area */}
       <Box ref={scrollRef} sx={markdownStyles}>

@@ -7,6 +7,10 @@ import type {
   OutgoingWebSocketMessage,
   UserCommentHistoryMessage,
   UserCommentHistoryItem,
+  ClaudeFeedbackHistoryMessage,
+  ClaudeFeedbackHistoryItem,
+  ProblemStatementHistoryMessage,
+  ProblemStatementHistoryItem,
 } from "@shared/types/websocket";
 
 /** Error message type for generic errors (e.g., payment-error) */
@@ -29,6 +33,8 @@ interface MessageHandlers {
   onError: (message: string) => void;
   onUserCommentsReset: () => void;
   onUserCommentHistory: (comments: UserCommentHistoryItem[]) => void;
+  onClaudeFeedbackHistory: (feedbackItems: ClaudeFeedbackHistoryItem[]) => void;
+  onProblemStatementHistory: (statements: ProblemStatementHistoryItem[]) => void;
   reloadUser: () => void;
 }
 
@@ -79,6 +85,20 @@ export function useWebSocketMessages({
       if (data.type === "user-comment-history") {
         const historyMsg = data as UserCommentHistoryMessage;
         handlers.onUserCommentHistory(historyMsg.comments);
+        return;
+      }
+
+      // Handle claude feedback history on reconnect
+      if (data.type === "claude-feedback-history") {
+        const historyMsg = data as ClaudeFeedbackHistoryMessage;
+        handlers.onClaudeFeedbackHistory(historyMsg.feedbackItems);
+        return;
+      }
+
+      // Handle problem statement history on reconnect
+      if (data.type === "problem-statement-history") {
+        const historyMsg = data as ProblemStatementHistoryMessage;
+        handlers.onProblemStatementHistory(historyMsg.statements);
         return;
       }
 

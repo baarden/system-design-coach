@@ -88,6 +88,28 @@ export interface UserCommentHistoryMessage {
   comments: UserCommentHistoryItem[];
 }
 
+export interface ClaudeFeedbackHistoryItem {
+  stepNumber: number;
+  content: string;
+  timestamp: string;
+}
+
+export interface ClaudeFeedbackHistoryMessage {
+  type: "claude-feedback-history";
+  feedbackItems: ClaudeFeedbackHistoryItem[];
+}
+
+export interface ProblemStatementHistoryItem {
+  stepNumber: number;
+  content: string;
+  timestamp: string;
+}
+
+export interface ProblemStatementHistoryMessage {
+  type: "problem-statement-history";
+  statements: ProblemStatementHistoryItem[];
+}
+
 export type IncomingWebSocketMessage = GetFeedbackMessage | ChatMessage | YjsSyncMessage;
 
 export type OutgoingWebSocketMessage =
@@ -98,4 +120,6 @@ export type OutgoingWebSocketMessage =
   | ChatResponseMessage
   | ChatHistoryMessage
   | ElementsBatchCreatedMessage
-  | UserCommentHistoryMessage;
+  | UserCommentHistoryMessage
+  | ClaudeFeedbackHistoryMessage
+  | ProblemStatementHistoryMessage;

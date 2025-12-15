@@ -17,6 +17,8 @@ describe("useWebSocketMessages", () => {
     onError: vi.fn(),
     onUserCommentsReset: vi.fn(),
     onUserCommentHistory: vi.fn(),
+    onClaudeFeedbackHistory: vi.fn(),
+    onProblemStatementHistory: vi.fn(),
     reloadUser: vi.fn(),
   };
 

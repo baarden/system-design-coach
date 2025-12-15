@@ -11,8 +11,18 @@ import { MultiRoomClientManager } from "../managers/MultiRoomClientManager.js";
 import { YjsDocManager } from "../managers/YjsDocManager.js";
 import { FeedbackService } from "../services/FeedbackService.js";
 import { ChatService } from "../services/ChatService.js";
-import { IncomingWebSocketMessage, ChatHistoryMessage, UserCommentHistoryMessage } from "../types/websocket.js";
+import { IncomingWebSocketMessage, ChatHistoryMessage, UserCommentHistoryMessage, ClaudeFeedbackHistoryMessage, ProblemStatementHistoryMessage } from "../types/websocket.js";
 import { logger } from "../utils/logger.js";
+
+/**
+ * Strip the auto-appended diagram changes JSON patch from user comment content.
+ * The patch is appended for Claude's context but shouldn't be shown in the UI.
+ */
+export function stripDiagramChanges(content: string): string {
+  const marker = "\n\nDiagram changes (JSON Patch):";
+  const index = content.indexOf(marker);
+  return index !== -1 ? content.substring(0, index) : content;
+}
 
 interface WebSocketHandlerDependencies {
   wss: WebSocketServer;
@@ -167,11 +177,44 @@ export function setupWebSocketHandlers(deps: WebSocketHandlerDependencies): void
           type: "user-comment-history",
           comments: userFeedbackComments.map((m, index) => ({
             stepNumber: index + 1,
-            content: m.content,
+            // Strip the auto-appended JSON patch from display (it's for Claude, not the user)
+            content: stripDiagramChanges(m.content),
             timestamp: m.timestamp,
           })),
         };
         ws.send(JSON.stringify(userCommentHistoryMessage));
+      }
+
+      // Send claude feedback history (assistant role, feedback source only)
+      // Skip the first one if it's the initial problem statement scaffold
+      const claudeFeedbackMessages = conversation.messages.filter(
+        (m) => m.role === "assistant" && m.source === "feedback"
+      );
+      // First message is usually the problem statement scaffold, actual feedback starts from index 1
+      const actualFeedback = claudeFeedbackMessages.slice(1);
+      if (actualFeedback.length > 0) {
+        const feedbackHistoryMessage: ClaudeFeedbackHistoryMessage = {
+          type: "claude-feedback-history",
+          feedbackItems: actualFeedback.map((m, index) => ({
+            stepNumber: index + 1,
+            content: m.content,
+            timestamp: m.timestamp,
+          })),
+        };
+        ws.send(JSON.stringify(feedbackHistoryMessage));
+      }
+
+      // Send problem statement history
+      if (conversation.problemStatementHistory && conversation.problemStatementHistory.length > 0) {
+        const problemHistoryMessage: ProblemStatementHistoryMessage = {
+          type: "problem-statement-history",
+          statements: conversation.problemStatementHistory.map((entry, index) => ({
+            stepNumber: index + 1,
+            content: entry.content,
+            timestamp: entry.timestamp,
+          })),
+        };
+        ws.send(JSON.stringify(problemHistoryMessage));
       }
     }
 

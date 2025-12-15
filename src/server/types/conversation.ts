@@ -31,12 +31,19 @@ export interface ElementsObject {
   [id: string]: SimplifiedElement;
 }
 
+export interface ProblemStatementHistoryEntry {
+  content: string;
+  timestamp: string;
+}
+
 export interface RoomConversationState {
   messages: ConversationMessage[];
   previousElements: ElementsObject;
   problemId: string;
   /** Current problem statement, updated when Claude provides a next_prompt */
   currentProblemStatement?: string;
+  /** History of problem statement changes */
+  problemStatementHistory?: ProblemStatementHistoryEntry[];
 }
 
 export type { Operation };

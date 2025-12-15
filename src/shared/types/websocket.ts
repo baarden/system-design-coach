@@ -95,6 +95,28 @@ export interface UserCommentHistoryMessage {
   comments: UserCommentHistoryItem[];
 }
 
+export interface ClaudeFeedbackHistoryItem {
+  stepNumber: number;
+  content: string;
+  timestamp: string;
+}
+
+export interface ClaudeFeedbackHistoryMessage {
+  type: "claude-feedback-history";
+  feedbackItems: ClaudeFeedbackHistoryItem[];
+}
+
+export interface ProblemStatementHistoryItem {
+  stepNumber: number;
+  content: string;
+  timestamp: string;
+}
+
+export interface ProblemStatementHistoryMessage {
+  type: "problem-statement-history";
+  statements: ProblemStatementHistoryItem[];
+}
+
 export interface YjsSyncBroadcast {
   type: "yjs-sync";
   /** Binary Yjs update encoded as number array */
@@ -110,6 +132,8 @@ export type OutgoingWebSocketMessage =
   | ChatHistoryMessage
   | ElementsBatchCreatedMessage
   | UserCommentHistoryMessage
+  | ClaudeFeedbackHistoryMessage
+  | ProblemStatementHistoryMessage
   | YjsSyncBroadcast;
 
 // ============================================

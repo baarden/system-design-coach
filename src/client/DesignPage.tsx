@@ -4,8 +4,8 @@ import { ExcalidrawClient } from "./components/ExcalidrawClient";
 import { useAuth } from "./providers/auth";
 import { ChatWidget } from "./components/ChatWidget";
 import { ResizableMarkdownPanel } from "./components/ResizablePanel";
-import { useWebSocketMessages, useFeedbackRequest, useUserCommentSteps, useYjsComments } from "./hooks";
-import type { CommentStep } from "./hooks";
+import { useWebSocketMessages, useFeedbackRequest, useUserCommentSteps, useClaudeFeedbackSteps, useProblemStatementSteps, useYjsComments } from "./hooks";
+import type { CommentStep, FeedbackStep, ProblemStatementStep } from "./hooks";
 import {
   TextField,
   Button,
@@ -27,7 +27,6 @@ const TUTORIAL_SEEN_KEY = 'tutorial-seen';
 
 interface DesignPageProps {
   title?: string;
-  claudeFeedback?: string;
   /** Guest mode - uses token-based access instead of owner access */
   guestMode?: boolean;
   /** Share token for guest access */
@@ -38,7 +37,6 @@ interface DesignPageProps {
 
 function DesignPage({
   title = "System Design Coach",
-  claudeFeedback = "",
   guestMode = false,
   guestToken,
   overrideRoomId,
@@ -92,7 +90,6 @@ function DesignPage({
     >
       <DesignPageContent
         title={title}
-        claudeFeedback={claudeFeedback}
         guestMode={guestMode}
         guestToken={guestToken}
         roomId={roomId}
@@ -105,7 +102,6 @@ function DesignPage({
 
 interface DesignPageContentProps {
   title: string;
-  claudeFeedback: string;
   guestMode: boolean;
   guestToken?: string;
   roomId: string;
@@ -115,7 +111,6 @@ interface DesignPageContentProps {
 
 function DesignPageContent({
   title,
-  claudeFeedback,
   guestMode,
   guestToken,
   roomId,
@@ -132,23 +127,80 @@ function DesignPageContent({
   const { comments: yjsComments, setComments: setYjsComments } = useYjsComments(yComments);
 
   // UI state
-  const [problemStatement, setProblemStatement] = useState<string>("");
   const [connectionState, setConnectionState] = useState<'connected' | 'idle' | 'disconnected'>('disconnected');
-  const [claudeFeedbackText, setClaudeFeedback] = useState<string>(claudeFeedback || "");
 
   // User comment steps management (for history navigation)
   const {
     steps: commentSteps,
-    currentStepContent: historicalContent,
-    isViewingLatestStep,
-    totalSteps,
-    selectStep,
     initializeFromHistory,
     resetAfterSubmit,
   } = useUserCommentSteps();
 
-  // When viewing latest step, show Yjs-synced content; otherwise show historical
-  const currentStepContent = isViewingLatestStep ? yjsComments : historicalContent;
+  // Claude feedback steps management (for history navigation)
+  const {
+    steps: feedbackSteps,
+    initializeFromHistory: initFeedbackHistory,
+    addNewFeedback,
+  } = useClaudeFeedbackSteps();
+
+  // Problem statement steps management (for history navigation)
+  const {
+    steps: problemSteps,
+    initializeFromHistory: initProblemHistory,
+    setInitialProblem,
+    addNextPrompt,
+  } = useProblemStatementSteps();
+
+  // Shared step navigation - all sections sync to same step
+  // null = viewing current/latest, number = viewing historical step
+  const [viewingStepNumber, setViewingStepNumber] = useState<number | null>(null);
+
+  // Total rounds based on user comments (which drives interaction rounds)
+  // +1 for the current editable step
+  const totalRounds = commentSteps.length + 1;
+
+  // Are we viewing the current/latest step?
+  const isViewingCurrent = viewingStepNumber === null || viewingStepNumber >= totalRounds;
+
+  // Derive displayed content for each section based on shared step
+  const displayedCommentContent = useMemo(() => {
+    if (isViewingCurrent) return yjsComments;
+    return commentSteps[viewingStepNumber! - 1]?.content ?? '';
+  }, [isViewingCurrent, viewingStepNumber, commentSteps, yjsComments]);
+
+  const displayedFeedbackContent = useMemo(() => {
+    if (feedbackSteps.length === 0) return '';
+    if (isViewingCurrent) return feedbackSteps[feedbackSteps.length - 1]?.content ?? '';
+    // Step 1 has no feedback (feedback comes after first submission)
+    if (viewingStepNumber === 1) return '';
+    // Show feedback for this step (step N corresponds to feedback N-1), or latest available
+    const stepIndex = Math.min(viewingStepNumber! - 2, feedbackSteps.length - 1);
+    return stepIndex >= 0 ? feedbackSteps[stepIndex]?.content ?? '' : '';
+  }, [isViewingCurrent, viewingStepNumber, feedbackSteps]);
+
+  const displayedProblemContent = useMemo(() => {
+    if (problemSteps.length === 0) return '';
+    if (isViewingCurrent) return problemSteps[problemSteps.length - 1]?.content ?? '';
+    // Show problem statement for this step, or latest available if step doesn't exist
+    const stepIndex = Math.min(viewingStepNumber! - 1, problemSteps.length - 1);
+    return problemSteps[stepIndex]?.content ?? '';
+  }, [isViewingCurrent, viewingStepNumber, problemSteps]);
+
+  // Unified step selector
+  const selectStep = useCallback((stepNumber: number) => {
+    if (stepNumber >= totalRounds) {
+      setViewingStepNumber(null); // Current
+    } else {
+      setViewingStepNumber(stepNumber);
+    }
+  }, [totalRounds]);
+
+  // Reset to current step after submit
+  const handleResetAfterSubmit = useCallback(() => {
+    resetAfterSubmit();
+    setViewingStepNumber(null);
+    setYjsComments('');
+  }, [resetAfterSubmit, setYjsComments]);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [chatMessageQueue, setChatMessageQueue] = useState<unknown[]>([]);
   const [isApiReady, setIsApiReady] = useState<boolean>(false);
@@ -243,10 +295,10 @@ function DesignPageContent({
         setChatMessageQueue(prev => [...prev, data]);
       },
       onClaudeFeedback: (feedback: string) => {
-        setClaudeFeedback(feedback);
+        addNewFeedback(feedback);
       },
       onNextPrompt: (prompt: string) => {
-        setProblemStatement(prompt);
+        addNextPrompt(prompt);
       },
       onFeedbackComplete: () => {
         setIsFeedbackLoading(false);
@@ -262,15 +314,20 @@ function DesignPageContent({
         setErrorMessage(message);
       },
       onUserCommentsReset: () => {
-        resetAfterSubmit();
-        setYjsComments(''); // Clear Yjs-backed comments
+        handleResetAfterSubmit();
       },
       onUserCommentHistory: (comments: CommentStep[]) => {
         initializeFromHistory(comments);
       },
+      onClaudeFeedbackHistory: (feedbackItems: FeedbackStep[]) => {
+        initFeedbackHistory(feedbackItems);
+      },
+      onProblemStatementHistory: (statements: ProblemStatementStep[]) => {
+        initProblemHistory(statements);
+      },
       reloadUser,
     }),
-    [reloadUser, setIsFeedbackLoading, resetAfterSubmit, initializeFromHistory, onUnavailable, setYjsComments]
+    [reloadUser, setIsFeedbackLoading, handleResetAfterSubmit, initializeFromHistory, onUnavailable, addNewFeedback, addNextPrompt, initFeedbackHistory, initProblemHistory]
   );
 
   // WebSocket message handler
@@ -287,13 +344,13 @@ function DesignPageContent({
     fetchProblem(problemId)
       .then((data) => {
         if (data.success && data.problem) {
-          setProblemStatement(data.problem.statement);
+          setInitialProblem(data.problem.statement);
         }
       })
       .catch((error) => {
         console.error("Error fetching problem:", error);
       });
-  }, [problemIdFromRoom]);
+  }, [problemIdFromRoom, setInitialProblem]);
 
   // Handle incoming yjs-sync messages from WebSocket
   const handleIncomingMessage = useCallback(
@@ -406,7 +463,7 @@ function DesignPageContent({
   // Re-check scroll state when feedback text changes
   useEffect(() => {
     handleFeedbackScroll();
-  }, [claudeFeedbackText, handleFeedbackScroll]);
+  }, [displayedFeedbackContent, handleFeedbackScroll]);
 
   // Handle scroll detection for problem statement fade effects
   const handleProblemStatementScroll = useCallback(() => {
@@ -433,7 +490,7 @@ function DesignPageContent({
   // Re-check scroll state when problem statement changes
   useEffect(() => {
     handleProblemStatementScroll();
-  }, [problemStatement, handleProblemStatementScroll]);
+  }, [displayedProblemContent, handleProblemStatementScroll]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
@@ -463,23 +520,33 @@ function DesignPageContent({
         {/* Claude Feedback */}
         <ResizableMarkdownPanel
           label="Claude Feedback"
-          content={claudeFeedbackText}
+          content={displayedFeedbackContent}
           height={feedbackHeight}
           scrollRef={feedbackScrollRef}
           hasScrollTop={hasScrollTop}
           hasScrollBottom={hasScrollBottom}
           onDragStart={handleFeedbackMouseDown}
+          steps={totalRounds >= 2 ? commentSteps : undefined}
+          totalSteps={totalRounds >= 2 ? totalRounds : undefined}
+          currentStep={totalRounds >= 2 ? (isViewingCurrent ? totalRounds : viewingStepNumber!) : undefined}
+          isViewingLatest={isViewingCurrent}
+          onStepSelect={totalRounds >= 2 ? selectStep : undefined}
         />
 
         {/* Problem Statement */}
         <ResizableMarkdownPanel
           label="Problem Statement"
-          content={problemStatement}
+          content={displayedProblemContent}
           height={problemStatementHeight}
           scrollRef={problemScrollRef}
           hasScrollTop={hasProblemScrollTop}
           hasScrollBottom={hasProblemScrollBottom}
           onDragStart={handleProblemStatementMouseDown}
+          steps={totalRounds >= 2 ? commentSteps : undefined}
+          totalSteps={totalRounds >= 2 ? totalRounds : undefined}
+          currentStep={totalRounds >= 2 ? (isViewingCurrent ? totalRounds : viewingStepNumber!) : undefined}
+          isViewingLatest={isViewingCurrent}
+          onStepSelect={totalRounds >= 2 ? selectStep : undefined}
         />
 
         {/* Excalidraw Canvas - Fills remaining space */}
@@ -543,7 +610,7 @@ function DesignPageContent({
             {/* Step Dropdown - embedded in border like a label */}
             <Select
               size="small"
-              value={isViewingLatestStep ? totalSteps : (commentSteps.findIndex(s => s.content === currentStepContent) + 1)}
+              value={isViewingCurrent ? totalRounds : viewingStepNumber}
               onChange={(e) => selectStep(Number(e.target.value))}
               variant="standard"
               disableUnderline
@@ -559,7 +626,7 @@ function DesignPageContent({
                   py: 0,
                   pr: "20px !important",
                   fontSize: "0.75rem",
-                  color: isViewingLatestStep ? "text.secondary" : "warning.main",
+                  color: isViewingCurrent ? "text.secondary" : "warning.main",
                 },
                 "& .MuiSvgIcon-root": {
                   fontSize: "1rem",
@@ -572,22 +639,22 @@ function DesignPageContent({
                   User comments [step {step.stepNumber}]
                 </MenuItem>
               ))}
-              <MenuItem value={totalSteps} sx={{ fontSize: "0.875rem" }}>
-                User comments [step {totalSteps}]{commentSteps.length > 0 ? " (current)" : ""}
+              <MenuItem value={totalRounds} sx={{ fontSize: "0.875rem" }}>
+                User comments [step {totalRounds}]{commentSteps.length > 0 ? " (current)" : ""}
               </MenuItem>
             </Select>
 
             {/* TextField - uses Yjs for real-time collaboration */}
             <TextField
               multiline
-              value={currentStepContent}
+              value={displayedCommentContent}
               onChange={(e) => {
-                if (isViewingLatestStep) {
+                if (isViewingCurrent) {
                   setYjsComments(e.target.value);
                 }
               }}
-              disabled={!isViewingLatestStep}
-              placeholder={isViewingLatestStep ? "Add your notes and comments here..." : ""}
+              disabled={!isViewingCurrent}
+              placeholder={isViewingCurrent ? "Add your notes and comments here..." : ""}
               sx={{
                 width: "100%",
                 height: "100%",
@@ -596,9 +663,6 @@ function DesignPageContent({
                   overflow: "auto",
                   alignItems: "flex-start",
                   pt: 1.5,
-                  ...((!isViewingLatestStep) && {
-                    backgroundColor: "action.disabledBackground",
-                  }),
                 },
                 "& .MuiOutlinedInput-notchedOutline": {
                   "& legend": {
@@ -608,7 +672,7 @@ function DesignPageContent({
               }}
               slotProps={{
                 input: {
-                  readOnly: !isViewingLatestStep,
+                  readOnly: !isViewingCurrent,
                 },
               }}
             />

@@ -146,6 +146,7 @@ export class RedisStateManager implements AsyncStateManager {
 
   async setCurrentProblemStatement(roomId: string, statement: string): Promise<void> {
     const key = this.conversationKey(roomId);
+    const timestamp = new Date().toISOString();
 
     // Lua script for atomic read-modify-write
     const script = `
@@ -155,11 +156,16 @@ export class RedisStateManager implements AsyncStateManager {
       end
       local state = cjson.decode(current)
       state.currentProblemStatement = ARGV[1]
+      -- Append to history
+      if not state.problemStatementHistory then
+        state.problemStatementHistory = {}
+      end
+      table.insert(state.problemStatementHistory, { content = ARGV[1], timestamp = ARGV[2] })
       redis.call('SET', KEYS[1], cjson.encode(state))
       return 'OK'
     `;
 
-    await this.redis.eval(script, 1, key, statement);
+    await this.redis.eval(script, 1, key, statement, timestamp);
   }
 
   async clearConversation(roomId: string): Promise<void> {

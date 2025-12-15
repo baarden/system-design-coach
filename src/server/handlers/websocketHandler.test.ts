@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { WebSocketServer } from "ws";
 import type WebSocket from "ws";
 import type { IncomingMessage } from "http";
-import { setupWebSocketHandlers } from "./websocketHandler.js";
+import { setupWebSocketHandlers, stripDiagramChanges } from "./websocketHandler.js";
 import { MultiRoomStateManager } from "../managers/MultiRoomStateManager.js";
 import { MultiRoomClientManager } from "../managers/MultiRoomClientManager.js";
 import { YjsDocManager } from "../managers/YjsDocManager.js";
@@ -322,5 +322,31 @@ describe("websocketHandler", () => {
 
       expect(clientManager.getRoomForClient(ws)).toBeUndefined();
     });
+  });
+});
+
+describe("stripDiagramChanges", () => {
+  it("removes diagram changes JSON patch from content", () => {
+    const content = `My design notes here
+
+Diagram changes (JSON Patch): [{"op":"add","path":"/elem1"}]`;
+
+    expect(stripDiagramChanges(content)).toBe("My design notes here");
+  });
+
+  it("returns original content if no diagram changes marker", () => {
+    const content = "Just some user comments without any patch";
+
+    expect(stripDiagramChanges(content)).toBe(content);
+  });
+
+  it("handles empty content", () => {
+    expect(stripDiagramChanges("")).toBe("");
+  });
+
+  it("handles content that is only the marker", () => {
+    const content = "\n\nDiagram changes (JSON Patch): []";
+
+    expect(stripDiagramChanges(content)).toBe("");
   });
 });

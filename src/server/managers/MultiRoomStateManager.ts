@@ -113,6 +113,14 @@ export class MultiRoomStateManager implements AsyncStateManager {
       throw new Error(`No conversation state for room: ${roomId}`);
     }
     state.currentProblemStatement = statement;
+    // Append to history
+    if (!state.problemStatementHistory) {
+      state.problemStatementHistory = [];
+    }
+    state.problemStatementHistory.push({
+      content: statement,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   async clearConversation(roomId: string): Promise<void> {
