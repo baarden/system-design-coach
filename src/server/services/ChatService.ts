@@ -1,6 +1,7 @@
 import type WebSocket from "ws";
 import type { AsyncStateManager } from "../managers/types.js";
 import { UsageProvider } from "../providers/usage/types.js";
+import { metricsProvider, MetricNames } from "../providers/metrics/index.js";
 import type { ProblemRepository } from "../repositories/ProblemRepository.js";
 import type { AIClient } from "./ai/types.js";
 import {
@@ -130,6 +131,8 @@ export class ChatService {
         inputTokens: response.usage.inputTokens,
         outputTokens: response.usage.outputTokens,
       }, (msg) => ws.send(JSON.stringify(msg)));
+
+      metricsProvider.increment(MetricNames.QUERY_EXECUTED);
 
       // Extract text response
       const textBlock = response.content.find((block) => block.type === "text");

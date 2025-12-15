@@ -3,6 +3,7 @@ import type { ServerElement } from "../../shared/types/excalidraw.js";
 import type { AsyncStateManager } from "../managers/types.js";
 import type { YjsDocManager } from "../managers/YjsDocManager.js";
 import { UsageProvider } from "../providers/usage/types.js";
+import { metricsProvider, MetricNames } from "../providers/metrics/index.js";
 import type { ProblemRepository } from "../repositories/ProblemRepository.js";
 import type { AIClient, AITool, AIToolUseBlock } from "./ai/types.js";
 import type { MessageBroadcaster } from "./MessageBroadcaster.js";
@@ -197,6 +198,8 @@ export class FeedbackService {
         inputTokens: response.usage.inputTokens,
         outputTokens: response.usage.outputTokens,
       }, (msg) => ws.send(JSON.stringify(msg)));
+
+      metricsProvider.increment(MetricNames.QUERY_EXECUTED);
 
       // Extract tool use from response
       const toolUseBlock = response.content.find(

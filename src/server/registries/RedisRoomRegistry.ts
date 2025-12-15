@@ -1,6 +1,7 @@
 import type Redis from 'ioredis';
 import type { RoomMetadata, RoomRegistry } from './types.js';
 import { generateShareToken } from '../utils/tokenUtils.js';
+import { metricsProvider, MetricNames } from '../providers/metrics/index.js';
 
 export class RedisRoomRegistry implements RoomRegistry {
   private redis: Redis;
@@ -71,6 +72,8 @@ export class RedisRoomRegistry implements RoomRegistry {
       this.tokenKey(token),
       metadataJson
     );
+
+    metricsProvider.increment(MetricNames.ROOM_CREATED);
 
     return JSON.parse(result as string);
   }

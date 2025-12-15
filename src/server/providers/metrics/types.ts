@@ -24,3 +24,10 @@ export interface MetricsProvider {
    */
   stopPeriodicCollection(): void;
 }
+
+export const MetricNames = {
+  QUERY_EXECUTED: 'QueryExecuted',
+  ROOM_CREATED: 'RoomCreated',
+} as const;
+
+export type MetricName = (typeof MetricNames)[keyof typeof MetricNames];

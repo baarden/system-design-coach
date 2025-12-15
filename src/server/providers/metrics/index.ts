@@ -1,6 +1,7 @@
 import { NoopMetricsProvider } from './NoopMetricsProvider.js';
 import type { MetricsProvider } from './types.js';
 
+export { MetricNames, type MetricName } from './types.js';
 export type { MetricsProvider } from './types.js';
 export { NoopMetricsProvider } from './NoopMetricsProvider.js';
 
