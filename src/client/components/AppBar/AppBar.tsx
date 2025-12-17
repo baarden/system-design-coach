@@ -81,7 +81,7 @@ export function AppBar({
           color="inherit"
           aria-label="menu"
           onClick={handleMenuOpen}
-          sx={{ mr: 2 }}
+          sx={{ mr: { xs: 0.5, sm: 2 } }}
         >
           <MenuIcon />
         </IconButton>
@@ -90,6 +90,47 @@ export function AppBar({
           open={menuOpen}
           onClose={handleMenuClose}
         >
+          {connectionState !== undefined && (
+            <MenuItem
+              onClick={connectionState !== 'connected' && onReconnect ? () => { onReconnect(); handleMenuClose(); } : handleMenuClose}
+              sx={{ display: { xs: 'flex', sm: 'none' } }}
+            >
+              <ListItemIcon>
+                <Box
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    backgroundColor: connectionConfig[connectionState].color,
+                    ml: 0.5,
+                  }}
+                />
+              </ListItemIcon>
+              <ListItemText>{connectionConfig[connectionState].label}</ListItemText>
+            </MenuItem>
+          )}
+          {onTutorialClick && (
+            <MenuItem
+              onClick={() => { onTutorialClick(); handleMenuClose(); }}
+              sx={{ display: { xs: 'flex', sm: 'none' } }}
+            >
+              <ListItemIcon>
+                <InfoOutlinedIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>How to use</ListItemText>
+            </MenuItem>
+          )}
+          {isOwner && roomId && (
+            <MenuItem
+              onClick={() => { setShareOpen(true); handleMenuClose(); }}
+              sx={{ display: { xs: 'flex', sm: 'none' } }}
+            >
+              <ListItemIcon>
+                <ShareIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Share room</ListItemText>
+            </MenuItem>
+          )}
           <MenuItem onClick={toggleTheme}>
             <ListItemIcon>
               <DarkModeIcon fontSize="small" />
@@ -137,32 +178,40 @@ export function AppBar({
           }}
         >
           <img src={iconPng} alt="" width={28} height={28} style={{ borderRadius: 4 }} />
-          <Typography variant="h6" component="div">
+          <Typography
+            variant="h6"
+            component="div"
+            sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
+          >
             {title}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {onTutorialClick && (
-            <Tooltip title="How to use">
-              <IconButton
-                color="inherit"
-                onClick={onTutorialClick}
-                aria-label="How to use"
-              >
-                <InfoOutlinedIcon />
-              </IconButton>
-            </Tooltip>
+            <Box sx={{ display: { xs: 'none', sm: 'flex' } }}>
+              <Tooltip title="How to use">
+                <IconButton
+                  color="inherit"
+                  onClick={onTutorialClick}
+                  aria-label="How to use"
+                >
+                  <InfoOutlinedIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
           )}
           {isOwner && roomId && (
-            <Tooltip title="Share room">
-              <IconButton
-                color="inherit"
-                onClick={() => setShareOpen(true)}
-                aria-label="Share room"
-              >
-                <ShareIcon />
-              </IconButton>
-            </Tooltip>
+            <Box sx={{ display: { xs: 'none', sm: 'flex' } }}>
+              <Tooltip title="Share room">
+                <IconButton
+                  color="inherit"
+                  onClick={() => setShareOpen(true)}
+                  aria-label="Share room"
+                >
+                  <ShareIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
           )}
           {connectionState !== undefined && (
             <Tooltip
@@ -171,7 +220,7 @@ export function AppBar({
               <Box
                 onClick={connectionState !== 'connected' && onReconnect ? onReconnect : undefined}
                 sx={{
-                  display: 'flex',
+                  display: { xs: 'none', sm: 'flex' },
                   alignItems: 'center',
                   gap: 1,
                   ...(connectionState !== 'connected' && onReconnect && {

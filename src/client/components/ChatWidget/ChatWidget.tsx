@@ -189,8 +189,8 @@ export default function ChatWidget({
           onClick={() => setIsOpen(true)}
           sx={{
             position: "fixed",
-            bottom: 24,
-            right: 24,
+            bottom: 16,
+            right: 16,
             zIndex: 1000,
           }}
         >
@@ -203,10 +203,12 @@ export default function ChatWidget({
         elevation={8}
         sx={{
           position: "fixed",
-          bottom: 24,
-          right: 24,
+          bottom: 16,
+          right: 16,
           width: 380,
+          maxWidth: "calc(100vw - 32px)",
           height: 500,
+          maxHeight: "calc(100vh - 32px)",
           display: isOpen ? "flex" : "none",
           flexDirection: "column",
           zIndex: 1000,

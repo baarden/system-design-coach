@@ -69,7 +69,7 @@ function LandingPage() {
         {/* Hero Icon */}
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
           <img src={iconPng} alt="System Design Coach" width={120} height={120} style={{ borderRadius: 16 }} />
-          <Typography variant="h3" component="h1" sx={{ mt: 2, fontWeight: 600 }}>
+          <Typography variant="h3" component="h1" sx={{ mt: 2, fontWeight: 600, textAlign: 'center' }}>
             System Design Coach
           </Typography>
         </Box>

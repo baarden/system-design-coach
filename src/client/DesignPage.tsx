@@ -15,6 +15,8 @@ import {
   Alert,
   Select,
   MenuItem,
+  useMediaQuery,
+  useTheme as useMuiTheme,
 } from "@mui/material";
 import { AppBar } from "./components/AppBar";
 import { TutorialDialog } from "./components/TutorialDialog";
@@ -119,6 +121,8 @@ function DesignPageContent({
 }: DesignPageContentProps) {
   const { userId, reloadUser, onUnavailable } = useAuth();
   const { mode } = useTheme();
+  const muiTheme = useMuiTheme();
+  const isSmallScreen = useMediaQuery(muiTheme.breakpoints.down('sm'));
 
   // Get Yjs context for collaborative sync
   const { yElements, yComments, requestSync } = useYjs();
@@ -218,6 +222,17 @@ function DesignPageContent({
   const [commentsHeight, setCommentsHeight] = useState<number>(120);
   const [feedbackHeight, setFeedbackHeight] = useState<number>(120);
   const [problemStatementHeight, setProblemStatementHeight] = useState<number>(120);
+  const heightsInitializedRef = useRef(false);
+
+  // Set smaller initial heights on small screens
+  useEffect(() => {
+    if (!heightsInitializedRef.current && isSmallScreen) {
+      heightsInitializedRef.current = true;
+      setCommentsHeight(80);
+      setFeedbackHeight(80);
+      setProblemStatementHeight(80);
+    }
+  }, [isSmallScreen]);
 
   // Drag states for resizable panels
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -378,8 +393,8 @@ function DesignPageContent({
     setIsDraggingProblemStatement(true);
   }, []);
 
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
+  const handleMove = useCallback(
+    (clientY: number) => {
       if (!containerRef.current) return;
 
       const containerRect = containerRef.current.getBoundingClientRect();
@@ -388,20 +403,20 @@ function DesignPageContent({
 
       if (isDragging) {
         const bottomOfContainer = containerRect.bottom;
-        const newHeight = bottomOfContainer - e.clientY - 56; // Account for button + gaps
+        const newHeight = bottomOfContainer - clientY - 56; // Account for button + gaps
         setCommentsHeight(Math.max(minHeight, Math.min(maxHeight, newHeight)));
       }
 
       if (isDraggingFeedback) {
         const topOfContainer = containerRect.top;
-        const newHeight = e.clientY - topOfContainer - 16; // Account for container padding
+        const newHeight = clientY - topOfContainer - 16; // Account for container padding
         setFeedbackHeight(Math.max(minHeight, Math.min(maxHeight, newHeight)));
       }
 
       if (isDraggingProblemStatement) {
         const topOfContainer = containerRect.top;
         const feedbackOffset = feedbackHeight + 32; // Account for feedback box + gap
-        const newHeight = e.clientY - topOfContainer - feedbackOffset;
+        const newHeight = clientY - topOfContainer - feedbackOffset;
         setProblemStatementHeight(
           Math.max(minHeight, Math.min(maxHeight, newHeight))
         );
@@ -410,31 +425,54 @@ function DesignPageContent({
     [isDragging, isDraggingFeedback, isDraggingProblemStatement, feedbackHeight]
   );
 
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      handleMove(e.clientY);
+    },
+    [handleMove]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        handleMove(e.touches[0].clientY);
+      }
+    },
+    [handleMove]
+  );
+
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
     setIsDraggingFeedback(false);
     setIsDraggingProblemStatement(false);
   }, []);
 
-  // Add and remove event listeners
+  // Add and remove event listeners for mouse and touch
   useEffect(() => {
     if (isDragging || isDraggingFeedback || isDraggingProblemStatement) {
       document.addEventListener("mousemove", handleMouseMove as any);
       document.addEventListener("mouseup", handleMouseUp);
+      document.addEventListener("touchmove", handleTouchMove as any);
+      document.addEventListener("touchend", handleMouseUp);
     } else {
       document.removeEventListener("mousemove", handleMouseMove as any);
       document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("touchmove", handleTouchMove as any);
+      document.removeEventListener("touchend", handleMouseUp);
     }
 
     return () => {
       document.removeEventListener("mousemove", handleMouseMove as any);
       document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("touchmove", handleTouchMove as any);
+      document.removeEventListener("touchend", handleMouseUp);
     };
   }, [
     isDragging,
     isDraggingFeedback,
     isDraggingProblemStatement,
     handleMouseMove,
+    handleTouchMove,
     handleMouseUp,
   ]);
 
@@ -595,6 +633,7 @@ function DesignPageContent({
           {/* Drag handle overlay on top border */}
           <Box
             onMouseDown={handleMouseDown}
+            onTouchStart={handleMouseDown}
             sx={{
               position: "absolute",
               top: -4,
@@ -603,6 +642,7 @@ function DesignPageContent({
               height: "12px",
               cursor: "ns-resize",
               zIndex: 1,
+              touchAction: "none",
             }}
           />
           {/* TextField with embedded step selector in border */}
@@ -681,6 +721,7 @@ function DesignPageContent({
                   overflow: "auto",
                   alignItems: "flex-start",
                   pt: 1.5,
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
                 },
                 "& .MuiOutlinedInput-notchedOutline": {
                   "& legend": {

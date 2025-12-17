@@ -59,7 +59,7 @@ export function ResizableMarkdownPanel({
     overflow: "auto",
     p: 2,
     pt: 2.5,
-    fontSize: "1rem",
+    fontSize: { xs: "0.875rem", sm: "1rem" },
     lineHeight: 1.5,
     "& p": { margin: "0.5em 0" },
     "& p:first-of-type": { marginTop: 0 },
@@ -190,6 +190,7 @@ export function ResizableMarkdownPanel({
       {/* Drag handle */}
       <Box
         onMouseDown={onDragStart}
+        onTouchStart={onDragStart}
         sx={{
           position: "absolute",
           ...(dragHandlePosition === "bottom"
@@ -200,6 +201,7 @@ export function ResizableMarkdownPanel({
           height: "12px",
           cursor: "ns-resize",
           zIndex: 1,
+          touchAction: "none",
         }}
       />
     </Box>
