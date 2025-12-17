@@ -14,6 +14,7 @@ const noopValue: AuthContextValue = {
   reloadUser: () => {},
   onUnavailable: () => {},
   checkAvailability: async () => true,
+  openPurchaseDialog: () => {},
 };
 
 interface NoopAuthProviderProps {

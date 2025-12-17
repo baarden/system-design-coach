@@ -18,7 +18,7 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ShareIcon from '@mui/icons-material/Share';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { AuthUI } from '../../providers/auth';
+import { AuthUI, AuthMenuItems } from '../../providers/auth';
 import iconPng from '../../assets/icon.png';
 import { useTheme } from '../../providers/theme';
 import { ShareDialog } from '../ShareDialog';
@@ -109,6 +109,7 @@ export function AppBar({
               <ListItemText>{connectionConfig[connectionState].label}</ListItemText>
             </MenuItem>
           )}
+          <AuthMenuItems onClose={handleMenuClose} />
           {onTutorialClick && (
             <MenuItem
               onClick={() => { onTutorialClick(); handleMenuClose(); }}

@@ -12,6 +12,7 @@ export interface AuthContextValue {
   reloadUser: () => void;
   onUnavailable: () => void;
   checkAvailability: () => Promise<boolean>;
+  openPurchaseDialog: () => void;
 }
 
 export interface AuthMenuItemsProps {
