@@ -13,3 +13,7 @@ export interface AuthContextValue {
   onUnavailable: () => void;
   checkAvailability: () => Promise<boolean>;
 }
+
+export interface AuthMenuItemsProps {
+  onClose: () => void;
+}

@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import { NoopAuthProvider, NoopAuthUI } from './NoopAuthProvider';
+import { NoopAuthProvider, NoopAuthUI, NoopAuthMenuItems } from './NoopAuthProvider';
 
 export { useAuth } from './AuthContext';
-export type { AuthUser, AuthContextValue } from './types';
+export type { AuthUser, AuthContextValue, AuthMenuItemsProps } from './types';
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -15,3 +15,5 @@ export function AuthProvider({ children }: AuthProviderProps) {
 export function AuthUI() {
   return <NoopAuthUI />;
 }
+
+export const AuthMenuItems = NoopAuthMenuItems;

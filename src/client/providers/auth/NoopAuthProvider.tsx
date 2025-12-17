@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { AuthContext } from './AuthContext';
-import type { AuthContextValue } from './types';
+import type { AuthContextValue, AuthMenuItemsProps } from './types';
 
 const DEFAULT_USER_ID = 'default-user';
 
@@ -29,5 +29,9 @@ export function NoopAuthProvider({ children }: NoopAuthProviderProps) {
 }
 
 export function NoopAuthUI() {
+  return null;
+}
+
+export function NoopAuthMenuItems(_props: AuthMenuItemsProps) {
   return null;
 }
