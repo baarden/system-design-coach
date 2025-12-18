@@ -4,17 +4,15 @@ import { ExcalidrawClient } from "./components/ExcalidrawClient";
 import { useAuth } from "./providers/auth";
 import { ChatWidget } from "./components/ChatWidget";
 import { ResizableMarkdownPanel } from "./components/ResizablePanel";
-import { useWebSocketMessages, useFeedbackRequest, useUserCommentSteps, useClaudeFeedbackSteps, useProblemStatementSteps, useYjsComments } from "./hooks";
+import { UserCommentsPanel } from "./components/UserCommentsPanel";
+import { ActionButtons } from "./components/ActionButtons";
+import { useWebSocketMessages, useFeedbackRequest, useUserCommentSteps, useClaudeFeedbackSteps, useProblemStatementSteps, useYjsComments, useDragResize, useScrollFade, useUnifiedStepNavigation, useDesignPageDialogs } from "./hooks";
 import type { CommentStep, FeedbackStep, ProblemStatementStep } from "./hooks";
 import {
-  TextField,
   Button,
   Box,
-  CircularProgress,
   Snackbar,
   Alert,
-  Select,
-  MenuItem,
   useMediaQuery,
   useTheme as useMuiTheme,
 } from "@mui/material";
@@ -22,11 +20,9 @@ import { AppBar } from "./components/AppBar";
 import { TutorialDialog } from "./components/TutorialDialog";
 import { ResetProblemDialog } from "./components/ResetProblemDialog";
 import { useTheme } from "./providers/theme";
-import { fetchProblem, getServerUrl, resetRoomContent } from "./api";
+import { fetchProblem, getServerUrl } from "./api";
 import { YjsProvider, useYjs } from "./providers/yjs";
 import type { ExcalidrawMessage } from "@shared/types/excalidraw";
-
-const TUTORIAL_SEEN_KEY = 'tutorial-seen';
 
 interface DesignPageProps {
   title?: string;
@@ -156,57 +152,45 @@ function DesignPageContent({
     addNextPrompt,
   } = useProblemStatementSteps();
 
-  // Shared step navigation - all sections sync to same step
-  // null = viewing current/latest, number = viewing historical step
-  const [viewingStepNumber, setViewingStepNumber] = useState<number | null>(null);
-
-  // Total rounds based on user comments (which drives interaction rounds)
-  // +1 for the current editable step
-  const totalRounds = commentSteps.length + 1;
-
-  // Are we viewing the current/latest step?
-  const isViewingCurrent = viewingStepNumber === null || viewingStepNumber >= totalRounds;
-
-  // Derive displayed content for each section based on shared step
-  const displayedCommentContent = useMemo(() => {
-    if (isViewingCurrent) return yjsComments;
-    return commentSteps[viewingStepNumber! - 1]?.content ?? '';
-  }, [isViewingCurrent, viewingStepNumber, commentSteps, yjsComments]);
-
-  const displayedFeedbackContent = useMemo(() => {
-    if (feedbackSteps.length === 0) return '';
-    if (isViewingCurrent) return feedbackSteps[feedbackSteps.length - 1]?.content ?? '';
-    // Step 1 has no feedback (feedback comes after first submission)
-    if (viewingStepNumber === 1) return '';
-    // Show feedback for this step (step N corresponds to feedback N-1), or latest available
-    const stepIndex = Math.min(viewingStepNumber! - 2, feedbackSteps.length - 1);
-    return stepIndex >= 0 ? feedbackSteps[stepIndex]?.content ?? '' : '';
-  }, [isViewingCurrent, viewingStepNumber, feedbackSteps]);
-
-  const displayedProblemContent = useMemo(() => {
-    if (problemSteps.length === 0) return '';
-    if (isViewingCurrent) return problemSteps[problemSteps.length - 1]?.content ?? '';
-    // Show problem statement for this step, or latest available if step doesn't exist
-    const stepIndex = Math.min(viewingStepNumber! - 1, problemSteps.length - 1);
-    return problemSteps[stepIndex]?.content ?? '';
-  }, [isViewingCurrent, viewingStepNumber, problemSteps]);
-
-  // Unified step selector
-  const selectStep = useCallback((stepNumber: number) => {
-    if (stepNumber >= totalRounds) {
-      setViewingStepNumber(null); // Current
-    } else {
-      setViewingStepNumber(stepNumber);
-    }
-  }, [totalRounds]);
+  // Unified step navigation across all panels
+  const {
+    viewingStepNumber,
+    totalRounds,
+    isViewingCurrent,
+    displayedCommentContent,
+    displayedFeedbackContent,
+    displayedProblemContent,
+    selectStep,
+    resetToCurrentStep,
+  } = useUnifiedStepNavigation({
+    commentSteps,
+    feedbackSteps,
+    problemSteps,
+    currentComments: yjsComments,
+  });
 
   // Reset to current step after submit
   const handleResetAfterSubmit = useCallback(() => {
     resetAfterSubmit();
-    setViewingStepNumber(null);
+    resetToCurrentStep();
     setYjsComments('');
-  }, [resetAfterSubmit, setYjsComments]);
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  }, [resetAfterSubmit, resetToCurrentStep, setYjsComments]);
+
+  // Dialog state management
+  const {
+    tutorialOpen,
+    handleTutorialClose,
+    openTutorial,
+    resetDialogOpen,
+    isResetting,
+    openResetDialog,
+    closeResetDialog,
+    handleResetProblem,
+    errorMessage,
+    setErrorMessage,
+    clearError,
+  } = useDesignPageDialogs({ roomId });
+
   const [chatMessageQueue, setChatMessageQueue] = useState<unknown[]>([]);
   const [isApiReady, setIsApiReady] = useState<boolean>(false);
 
@@ -214,49 +198,47 @@ function DesignPageContent({
   useEffect(() => {
     setChatMessageQueue([]);
   }, [roomId]);
-  const [tutorialOpen, setTutorialOpen] = useState<boolean>(
-    () => localStorage.getItem(TUTORIAL_SEEN_KEY) !== 'true'
-  );
-  const [resetDialogOpen, setResetDialogOpen] = useState<boolean>(false);
-  const [isResetting, setIsResetting] = useState<boolean>(false);
   const [keepAlive, setKeepAlive] = useState(false);
-
-  // Panel heights for resizable panels
-  const [commentsHeight, setCommentsHeight] = useState<number>(120);
-  const [feedbackHeight, setFeedbackHeight] = useState<number>(120);
-  const [problemStatementHeight, setProblemStatementHeight] = useState<number>(120);
-  const heightsInitializedRef = useRef(false);
-
-  // Set smaller initial heights on small screens
-  useEffect(() => {
-    if (!heightsInitializedRef.current && isSmallScreen) {
-      heightsInitializedRef.current = true;
-      setCommentsHeight(80);
-      setFeedbackHeight(80);
-      setProblemStatementHeight(80);
-    }
-  }, [isSmallScreen]);
-
-  // Drag states for resizable panels
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [isDraggingFeedback, setIsDraggingFeedback] = useState<boolean>(false);
-  const [isDraggingProblemStatement, setIsDraggingProblemStatement] = useState<boolean>(false);
-
-  // Scroll fade states
-  const [hasScrollTop, setHasScrollTop] = useState<boolean>(false);
-  const [hasScrollBottom, setHasScrollBottom] = useState<boolean>(false);
-  const [hasProblemScrollTop, setHasProblemScrollTop] = useState<boolean>(false);
-  const [hasProblemScrollBottom, setHasProblemScrollBottom] = useState<boolean>(false);
 
   // Refs
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Resizable panel hooks
+  const initialHeight = isSmallScreen ? 80 : 120;
+  const feedbackDrag = useDragResize({
+    containerRef,
+    initialHeight,
+    minHeight: 80,
+    maxHeightRatio: 0.4,
+    direction: 'fromTop',
+    offset: 16,
+  });
+  const problemDrag = useDragResize({
+    containerRef,
+    initialHeight,
+    minHeight: 80,
+    maxHeightRatio: 0.4,
+    direction: 'fromTop',
+    offset: feedbackDrag.height + 32,
+  });
+  const commentsDrag = useDragResize({
+    containerRef,
+    initialHeight,
+    minHeight: 80,
+    maxHeightRatio: 0.4,
+    direction: 'fromBottom',
+    offset: 56,
+  });
+
+  // Scroll fade hooks
+  const feedbackScroll = useScrollFade();
+  const problemScroll = useScrollFade();
+
   const excalidrawApiRef = useRef<{
     send: (message: unknown) => void;
     syncToBackend: () => Promise<void>;
     reconnect: () => void;
   } | null>(null);
-  const feedbackScrollRef = useRef<HTMLDivElement>(null);
-  const problemScrollRef = useRef<HTMLDivElement>(null);
 
   // Derived values from props
   const problemIdFromRoom = roomId.split('/')[1];
@@ -270,12 +252,6 @@ function DesignPageContent({
   const wsPath = guestMode && guestToken
     ? `/ws/guest/${guestToken}`
     : `/ws/owner/${roomId}`;
-
-  // Tutorial dialog handler
-  const handleTutorialClose = useCallback(() => {
-    setTutorialOpen(false);
-    localStorage.setItem(TUTORIAL_SEEN_KEY, 'true');
-  }, []);
 
   // Keep alive handler (session only, resets on page reload)
   const handleKeepAliveChange = useCallback((value: boolean) => {
@@ -305,25 +281,6 @@ function DesignPageContent({
     userComments: yjsComments,
     onError: setErrorMessage,
   });
-
-  // Reset problem handler
-  const handleResetProblem = useCallback(async () => {
-    setIsResetting(true);
-    try {
-      const response = await resetRoomContent(roomId);
-      if (response.success) {
-        window.location.reload();
-      } else {
-        setErrorMessage(response.error || "Failed to reset problem");
-        setResetDialogOpen(false);
-      }
-    } catch (error) {
-      setErrorMessage((error as Error).message);
-      setResetDialogOpen(false);
-    } finally {
-      setIsResetting(false);
-    }
-  }, [roomId]);
 
   // WebSocket message handlers
   const messageHandlers = useMemo(
@@ -403,154 +360,14 @@ function DesignPageContent({
     [handleWebSocketMessage, yjsMessageHandlerRef]
   );
 
-  const handleMouseDown = useCallback(() => {
-    setIsDragging(true);
-  }, []);
-
-  const handleFeedbackMouseDown = useCallback(() => {
-    setIsDraggingFeedback(true);
-  }, []);
-
-  const handleProblemStatementMouseDown = useCallback(() => {
-    setIsDraggingProblemStatement(true);
-  }, []);
-
-  const handleMove = useCallback(
-    (clientY: number) => {
-      if (!containerRef.current) return;
-
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const minHeight = 80;
-      const maxHeight = containerRect.height * 0.4;
-
-      if (isDragging) {
-        const bottomOfContainer = containerRect.bottom;
-        const newHeight = bottomOfContainer - clientY - 56; // Account for button + gaps
-        setCommentsHeight(Math.max(minHeight, Math.min(maxHeight, newHeight)));
-      }
-
-      if (isDraggingFeedback) {
-        const topOfContainer = containerRect.top;
-        const newHeight = clientY - topOfContainer - 16; // Account for container padding
-        setFeedbackHeight(Math.max(minHeight, Math.min(maxHeight, newHeight)));
-      }
-
-      if (isDraggingProblemStatement) {
-        const topOfContainer = containerRect.top;
-        const feedbackOffset = feedbackHeight + 32; // Account for feedback box + gap
-        const newHeight = clientY - topOfContainer - feedbackOffset;
-        setProblemStatementHeight(
-          Math.max(minHeight, Math.min(maxHeight, newHeight))
-        );
-      }
-    },
-    [isDragging, isDraggingFeedback, isDraggingProblemStatement, feedbackHeight]
-  );
-
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      handleMove(e.clientY);
-    },
-    [handleMove]
-  );
-
-  const handleTouchMove = useCallback(
-    (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        handleMove(e.touches[0].clientY);
-      }
-    },
-    [handleMove]
-  );
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-    setIsDraggingFeedback(false);
-    setIsDraggingProblemStatement(false);
-  }, []);
-
-  // Add and remove event listeners for mouse and touch
+  // Re-check scroll state when content changes
   useEffect(() => {
-    if (isDragging || isDraggingFeedback || isDraggingProblemStatement) {
-      document.addEventListener("mousemove", handleMouseMove as any);
-      document.addEventListener("mouseup", handleMouseUp);
-      document.addEventListener("touchmove", handleTouchMove as any);
-      document.addEventListener("touchend", handleMouseUp);
-    } else {
-      document.removeEventListener("mousemove", handleMouseMove as any);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.removeEventListener("touchmove", handleTouchMove as any);
-      document.removeEventListener("touchend", handleMouseUp);
-    }
+    feedbackScroll.checkScroll();
+  }, [displayedFeedbackContent, feedbackScroll]);
 
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove as any);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.removeEventListener("touchmove", handleTouchMove as any);
-      document.removeEventListener("touchend", handleMouseUp);
-    };
-  }, [
-    isDragging,
-    isDraggingFeedback,
-    isDraggingProblemStatement,
-    handleMouseMove,
-    handleTouchMove,
-    handleMouseUp,
-  ]);
-
-  // Handle scroll detection for fade effects
-  const handleFeedbackScroll = useCallback(() => {
-    const element = feedbackScrollRef.current;
-    if (!element) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = element;
-    setHasScrollTop(scrollTop > 0);
-    setHasScrollBottom(scrollTop + clientHeight < scrollHeight - 1);
-  }, []);
-
-  // Setup scroll listener and initial check
   useEffect(() => {
-    const element = feedbackScrollRef.current;
-    if (!element) return;
-
-    // Check initial scroll state
-    handleFeedbackScroll();
-
-    element.addEventListener("scroll", handleFeedbackScroll);
-    return () => element.removeEventListener("scroll", handleFeedbackScroll);
-  }, [handleFeedbackScroll]);
-
-  // Re-check scroll state when feedback text changes
-  useEffect(() => {
-    handleFeedbackScroll();
-  }, [displayedFeedbackContent, handleFeedbackScroll]);
-
-  // Handle scroll detection for problem statement fade effects
-  const handleProblemStatementScroll = useCallback(() => {
-    const element = problemScrollRef.current;
-    if (!element) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = element;
-    setHasProblemScrollTop(scrollTop > 0);
-    setHasProblemScrollBottom(scrollTop + clientHeight < scrollHeight - 1);
-  }, []);
-
-  // Setup scroll listener and initial check for problem statement
-  useEffect(() => {
-    const element = problemScrollRef.current;
-    if (!element) return;
-
-    handleProblemStatementScroll();
-
-    element.addEventListener("scroll", handleProblemStatementScroll);
-    return () =>
-      element.removeEventListener("scroll", handleProblemStatementScroll);
-  }, [handleProblemStatementScroll]);
-
-  // Re-check scroll state when problem statement changes
-  useEffect(() => {
-    handleProblemStatementScroll();
-  }, [displayedProblemContent, handleProblemStatementScroll]);
+    problemScroll.checkScroll();
+  }, [displayedProblemContent, problemScroll]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
@@ -559,7 +376,7 @@ function DesignPageContent({
         connectionState={connectionState}
         roomId={roomId}
         isOwner={isOwner}
-        onTutorialClick={() => setTutorialOpen(true)}
+        onTutorialClick={openTutorial}
         onReconnect={handleReconnect}
         keepAlive={keepAlive}
         onKeepAliveChange={handleKeepAliveChange}
@@ -581,11 +398,11 @@ function DesignPageContent({
         <ResizableMarkdownPanel
           label="Claude Feedback"
           content={displayedFeedbackContent}
-          height={feedbackHeight}
-          scrollRef={feedbackScrollRef}
-          hasScrollTop={hasScrollTop}
-          hasScrollBottom={hasScrollBottom}
-          onDragStart={handleFeedbackMouseDown}
+          height={feedbackDrag.height}
+          scrollRef={feedbackScroll.scrollRef}
+          hasScrollTop={feedbackScroll.hasScrollTop}
+          hasScrollBottom={feedbackScroll.hasScrollBottom}
+          onDragStart={feedbackDrag.handleMouseDown}
           steps={totalRounds >= 2 ? commentSteps : undefined}
           totalSteps={totalRounds >= 2 ? totalRounds : undefined}
           currentStep={totalRounds >= 2 ? (isViewingCurrent ? totalRounds : viewingStepNumber!) : undefined}
@@ -597,11 +414,11 @@ function DesignPageContent({
         <ResizableMarkdownPanel
           label="Problem Statement"
           content={displayedProblemContent}
-          height={problemStatementHeight}
-          scrollRef={problemScrollRef}
-          hasScrollTop={hasProblemScrollTop}
-          hasScrollBottom={hasProblemScrollBottom}
-          onDragStart={handleProblemStatementMouseDown}
+          height={problemDrag.height}
+          scrollRef={problemScroll.scrollRef}
+          hasScrollTop={problemScroll.hasScrollTop}
+          hasScrollBottom={problemScroll.hasScrollBottom}
+          onDragStart={problemDrag.handleMouseDown}
           steps={totalRounds >= 2 ? commentSteps : undefined}
           totalSteps={totalRounds >= 2 ? totalRounds : undefined}
           currentStep={totalRounds >= 2 ? (isViewingCurrent ? totalRounds : viewingStepNumber!) : undefined}
@@ -645,153 +462,28 @@ function DesignPageContent({
         </Box>
 
         {/* User Comments with draggable top border */}
-        <Box
-          sx={{
-            position: "relative",
-            height: `${commentsHeight}px`,
-            width: "100%",
-          }}
-        >
-          {/* Drag handle overlay on top border */}
-          <Box
-            onMouseDown={handleMouseDown}
-            onTouchStart={handleMouseDown}
-            sx={{
-              position: "absolute",
-              top: -4,
-              left: 0,
-              right: 0,
-              height: "12px",
-              cursor: "ns-resize",
-              zIndex: 1,
-              touchAction: "none",
-            }}
-          />
-          {/* TextField with embedded step selector in border */}
-          <Box sx={{ position: "relative", height: "100%" }}>
-            {/* Step Dropdown - only shown when there are historical steps (totalRounds >= 2) */}
-            {totalRounds >= 2 ? (
-              <Select
-                size="small"
-                value={isViewingCurrent ? totalRounds : viewingStepNumber}
-                onChange={(e) => selectStep(Number(e.target.value))}
-                variant="standard"
-                disableUnderline
-                sx={{
-                  position: "absolute",
-                  top: -10,
-                  left: 8,
-                  zIndex: 1,
-                  backgroundColor: "background.paper",
-                  px: 0.5,
-                  fontSize: "0.75rem",
-                  "& .MuiSelect-select": {
-                    py: 0,
-                    pr: "20px !important",
-                    fontSize: "0.75rem",
-                    color: isViewingCurrent ? "text.secondary" : "warning.main",
-                  },
-                  "& .MuiSvgIcon-root": {
-                    fontSize: "1rem",
-                    right: 0,
-                  },
-                }}
-              >
-                {commentSteps.map((step) => (
-                  <MenuItem key={step.stepNumber} value={step.stepNumber} sx={{ fontSize: "0.875rem" }}>
-                    User comments [step {step.stepNumber}]
-                  </MenuItem>
-                ))}
-                <MenuItem value={totalRounds} sx={{ fontSize: "0.875rem" }}>
-                  User comments [step {totalRounds}] (current)
-                </MenuItem>
-              </Select>
-            ) : (
-              <Box
-                component="span"
-                sx={{
-                  position: "absolute",
-                  top: -9,
-                  left: 8,
-                  px: 0.5,
-                  backgroundColor: "background.paper",
-                  color: "text.secondary",
-                  fontSize: "0.75rem",
-                  zIndex: 1,
-                }}
-              >
-                User comments
-              </Box>
-            )}
-
-            {/* TextField - uses Yjs for real-time collaboration */}
-            <TextField
-              multiline
-              value={displayedCommentContent}
-              onChange={(e) => {
-                if (isViewingCurrent) {
-                  setYjsComments(e.target.value);
-                }
-              }}
-              disabled={!isViewingCurrent}
-              placeholder={isViewingCurrent ? "Add your notes and comments here..." : ""}
-              sx={{
-                width: "100%",
-                height: "100%",
-                "& .MuiInputBase-root": {
-                  height: "100%",
-                  overflow: "auto",
-                  alignItems: "flex-start",
-                  pt: 1.5,
-                  fontSize: { xs: "0.875rem", sm: "1rem" },
-                },
-                "& .MuiOutlinedInput-notchedOutline": {
-                  "& legend": {
-                    maxWidth: 0,
-                  },
-                },
-              }}
-              slotProps={{
-                input: {
-                  readOnly: !isViewingCurrent,
-                },
-              }}
-            />
-          </Box>
-        </Box>
+        <UserCommentsPanel
+          height={commentsDrag.height}
+          onDragStart={commentsDrag.handleMouseDown}
+          onTouchStart={commentsDrag.handleTouchStart}
+          content={displayedCommentContent}
+          onChange={setYjsComments}
+          isEditable={isViewingCurrent}
+          steps={commentSteps}
+          totalSteps={totalRounds}
+          currentStep={viewingStepNumber}
+          isViewingLatest={isViewingCurrent}
+          onStepSelect={selectStep}
+        />
 
         {/* Action buttons - only visible to room owner */}
         {isOwner && (
-          <Box sx={{ display: "flex", gap: 2, alignSelf: "flex-start" }}>
-            <Button
-              variant="contained"
-              onClick={handleGetFeedback}
-              disabled={isFeedbackLoading}
-              startIcon={
-                isFeedbackLoading ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : null
-              }
-            >
-              {isFeedbackLoading ? "Getting Feedback..." : "Get Feedback"}
-            </Button>
-            <Button
-              variant="outlined"
-              color="inherit"
-              onClick={() => setResetDialogOpen(true)}
-              disabled={isFeedbackLoading || isResetting}
-              sx={{
-                borderColor: "currentColor",
-                opacity: 0.8,
-                "&:hover": {
-                  opacity: 1,
-                  borderColor: "currentColor",
-                },
-              }}
-            >
-              Reset Problem
-            </Button>
-          </Box>
+          <ActionButtons
+            onGetFeedback={handleGetFeedback}
+            onResetProblem={openResetDialog}
+            isFeedbackLoading={isFeedbackLoading}
+            isResetting={isResetting}
+          />
         )}
       </Box>
 
@@ -799,11 +491,11 @@ function DesignPageContent({
       <Snackbar
         open={!!errorMessage}
         autoHideDuration={6000}
-        onClose={() => setErrorMessage("")}
+        onClose={clearError}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert
-          onClose={() => setErrorMessage("")}
+          onClose={clearError}
           severity="error"
           sx={{ width: "100%" }}
         >
@@ -829,7 +521,7 @@ function DesignPageContent({
       {/* Reset Problem Dialog */}
       <ResetProblemDialog
         open={resetDialogOpen}
-        onClose={() => setResetDialogOpen(false)}
+        onClose={closeResetDialog}
         onConfirm={handleResetProblem}
         isLoading={isResetting}
       />

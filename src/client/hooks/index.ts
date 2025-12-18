@@ -1,5 +1,7 @@
 export { useDragResize } from "./useDragResize";
 export { useScrollFade } from "./useScrollFade";
+export { useUnifiedStepNavigation } from "./useUnifiedStepNavigation";
+export { useDesignPageDialogs } from "./useDesignPageDialogs";
 export { useWebSocketMessages } from "./useWebSocketMessages";
 export { useFeedbackRequest } from "./useFeedbackRequest";
 export { useUserCommentSteps } from "./useUserCommentSteps";
