@@ -25,6 +25,7 @@ vi.mock("./providers/auth", () => ({
     reloadUser: vi.fn(),
   }),
   AuthUI: () => <div data-testid="auth-ui">Auth UI</div>,
+  AuthMenuItems: () => <div data-testid="auth-menu-items">Auth Menu Items</div>,
   ENABLE_AUTH: false,
 }));
 

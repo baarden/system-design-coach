@@ -13,6 +13,7 @@ vi.mock("../providers/auth", () => ({
     checkAvailability: vi.fn().mockResolvedValue(true),
   }),
   AuthUI: () => <div data-testid="auth-ui">Auth UI</div>,
+  AuthMenuItems: () => <div data-testid="auth-menu-items">Auth Menu Items</div>,
 }));
 
 // Mock the theme provider
