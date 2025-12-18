@@ -133,7 +133,7 @@ app.use(createElementRoutes({ stateManager, clientManager }));
 app.use("/api/problems", createProblemRoutes());
 
 // Register room routes
-app.use(createRoomRoutes({ roomRegistry, getBaseUrl }));
+app.use(createRoomRoutes({ roomRegistry, stateManager, yjsDocManager, getBaseUrl }));
 
 // Setup WebSocket handlers
 setupWebSocketHandlers({ wss, stateManager, clientManager, yjsDocManager, feedbackService, chatService, roomRegistry });

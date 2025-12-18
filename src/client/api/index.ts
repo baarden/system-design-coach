@@ -7,5 +7,6 @@ export {
   getRoom,
   createRoom,
   regenerateToken,
+  resetRoomContent,
 } from "./client";
-export type { RoomResponse } from "./client";
+export type { RoomResponse, ResetRoomResponse } from "./client";

@@ -62,6 +62,12 @@ export interface TokenRegenerateResponse {
   error?: string;
 }
 
+export interface ResetRoomResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
 /**
  * Resolve a share token to room info
  */
@@ -94,6 +100,16 @@ export async function createRoom(roomId: string): Promise<RoomResponse> {
 export async function regenerateToken(roomId: string): Promise<TokenRegenerateResponse> {
   const response = await fetch(`${getServerUrl()}/api/rooms/${roomId}/regenerate-token`, {
     method: 'POST',
+  });
+  return response.json();
+}
+
+/**
+ * Reset room content (elements, conversation, diagram)
+ */
+export async function resetRoomContent(roomId: string): Promise<ResetRoomResponse> {
+  const response = await fetch(`${getServerUrl()}/api/rooms/${roomId}/content`, {
+    method: 'DELETE',
   });
   return response.json();
 }

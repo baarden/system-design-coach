@@ -20,8 +20,9 @@ import {
 } from "@mui/material";
 import { AppBar } from "./components/AppBar";
 import { TutorialDialog } from "./components/TutorialDialog";
+import { ResetProblemDialog } from "./components/ResetProblemDialog";
 import { useTheme } from "./providers/theme";
-import { fetchProblem, getServerUrl } from "./api";
+import { fetchProblem, getServerUrl, resetRoomContent } from "./api";
 import { YjsProvider, useYjs } from "./providers/yjs";
 import type { ExcalidrawMessage } from "@shared/types/excalidraw";
 
@@ -216,6 +217,8 @@ function DesignPageContent({
   const [tutorialOpen, setTutorialOpen] = useState<boolean>(
     () => localStorage.getItem(TUTORIAL_SEEN_KEY) !== 'true'
   );
+  const [resetDialogOpen, setResetDialogOpen] = useState<boolean>(false);
+  const [isResetting, setIsResetting] = useState<boolean>(false);
   const [keepAlive, setKeepAlive] = useState(false);
 
   // Panel heights for resizable panels
@@ -302,6 +305,25 @@ function DesignPageContent({
     userComments: yjsComments,
     onError: setErrorMessage,
   });
+
+  // Reset problem handler
+  const handleResetProblem = useCallback(async () => {
+    setIsResetting(true);
+    try {
+      const response = await resetRoomContent(roomId);
+      if (response.success) {
+        window.location.reload();
+      } else {
+        setErrorMessage(response.error || "Failed to reset problem");
+        setResetDialogOpen(false);
+      }
+    } catch (error) {
+      setErrorMessage((error as Error).message);
+      setResetDialogOpen(false);
+    } finally {
+      setIsResetting(false);
+    }
+  }, [roomId]);
 
   // WebSocket message handlers
   const messageHandlers = useMemo(
@@ -738,20 +760,39 @@ function DesignPageContent({
           </Box>
         </Box>
 
-        {/* Get Feedback Button - disabled for guests */}
-        <Button
-          variant="contained"
-          onClick={handleGetFeedback}
-          disabled={isFeedbackLoading || !isOwner}
-          startIcon={
-            isFeedbackLoading ? (
-              <CircularProgress size={20} color="inherit" />
-            ) : null
-          }
-          sx={{ alignSelf: "flex-start" }}
-        >
-          {isFeedbackLoading ? "Getting Feedback..." : "Get Feedback"}
-        </Button>
+        {/* Action buttons - only visible to room owner */}
+        {isOwner && (
+          <Box sx={{ display: "flex", gap: 2, alignSelf: "flex-start" }}>
+            <Button
+              variant="contained"
+              onClick={handleGetFeedback}
+              disabled={isFeedbackLoading}
+              startIcon={
+                isFeedbackLoading ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : null
+              }
+            >
+              {isFeedbackLoading ? "Getting Feedback..." : "Get Feedback"}
+            </Button>
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={() => setResetDialogOpen(true)}
+              disabled={isFeedbackLoading || isResetting}
+              sx={{
+                borderColor: "currentColor",
+                opacity: 0.8,
+                "&:hover": {
+                  opacity: 1,
+                  borderColor: "currentColor",
+                },
+              }}
+            >
+              Reset Problem
+            </Button>
+          </Box>
+        )}
       </Box>
 
       {/* Error Snackbar */}
@@ -784,6 +825,14 @@ function DesignPageContent({
 
       {/* Tutorial Dialog */}
       <TutorialDialog open={tutorialOpen} onClose={handleTutorialClose} />
+
+      {/* Reset Problem Dialog */}
+      <ResetProblemDialog
+        open={resetDialogOpen}
+        onClose={() => setResetDialogOpen(false)}
+        onConfirm={handleResetProblem}
+        isLoading={isResetting}
+      />
     </Box>
   );
 }

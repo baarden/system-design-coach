@@ -7,7 +7,9 @@ import {
   Box,
   Typography,
 } from "@mui/material";
-import demoImageUrl from "../../assets/demo.png";
+import { useTheme } from "../../providers/theme";
+import demoLightImageUrl from "../../assets/demo_light.png";
+import demoDarkImageUrl from "../../assets/demo_dark.png";
 
 interface TutorialDialogProps {
   open: boolean;
@@ -15,8 +17,29 @@ interface TutorialDialogProps {
 }
 
 export function TutorialDialog({ open, onClose }: TutorialDialogProps) {
+  const { mode } = useTheme();
+  const demoImageUrl = mode === "dark" ? demoDarkImageUrl : demoLightImageUrl;
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{
+        backdrop: {
+          sx: {
+            backgroundColor: mode === "dark" ? "rgba(128, 128, 128, 0.5)" : undefined,
+          },
+        },
+      }}
+      PaperProps={{
+        sx: {
+          backgroundColor: mode === "dark" ? "#000" : undefined,
+          backgroundImage: mode === "dark" ? "none" : undefined,
+        },
+      }}
+    >
       <DialogTitle>Getting Started</DialogTitle>
       <DialogContent>
         <Box

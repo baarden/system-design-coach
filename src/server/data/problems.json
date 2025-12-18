@@ -22,6 +22,34 @@
       "statement": "Design a notification service like Twilio or OneSignal.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How applications request notifications to be sent\n- Support for multiple channels (email, SMS, push notifications)\n- How you route notifications to the appropriate channel\n- Your choice of database(s) and what they store\n- How you track delivery status and handle failures\n\nFocus on core notification delivery. We'll explore user preferences, templates, and scaling in follow-up questions."
     },
     {
+      "id": "recommendation-system",
+      "category": "Machine Learning",
+      "title": "**Recommendation System** (Netflix/Spotify)",
+      "description": "Design a personalized recommendation engine that suggests content to users based on their behavior and preferences.",
+      "statement": "Design a recommendation system like Netflix or Spotify.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How user interactions (clicks, views, ratings) are collected and processed\n- Your approach to generating recommendations (collaborative filtering, content-based, hybrid)\n- Your choice of database(s) for user profiles, item catalogs, and interaction data\n- How recommendations are computed and served to users\n- Whether you'll use batch or real-time processing\n\nFocus on core recommendation functionality. We'll explore cold start problems, A/B testing, and model retraining in follow-up questions."
+    },
+    {
+      "id": "search-ranking-system",
+      "category": "Machine Learning",
+      "title": "**Search Ranking System** (Google Search/Amazon Product Search)",
+      "description": "Design an ML-powered search system that ranks and returns relevant results based on user queries.",
+      "statement": "Design a search ranking system like Google Search or Amazon Product Search.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How search queries are processed and matched against indexed content\n- How you'll rank results using ML models (relevance scoring)\n- Your choice of database(s) and search indexes\n- How you handle personalization and context\n- Your approach to model training and feature engineering\n\nFocus on core search and ranking functionality. We'll explore query understanding, learning to rank, and real-time updates in follow-up questions."
+    },
+    {
+      "id": "fraud-detection-system",
+      "category": "Machine Learning",
+      "title": "**Fraud Detection System** (Stripe Radar/PayPal)",
+      "description": "Design a real-time ML system that detects and prevents fraudulent transactions with low latency.",
+      "statement": "Design a fraud detection system like Stripe Radar or PayPal's fraud prevention.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How transactions are scored in real-time (milliseconds)\n- Your ML model architecture and feature engineering approach\n- Your choice of database(s) for storing transaction history and patterns\n- How you handle model updates and retraining with new fraud patterns\n- Your strategy for balancing false positives vs. false negatives\n\nFocus on core real-time detection functionality. We'll explore rule engines, ensemble models, and feedback loops in follow-up questions."
+    },
+    {
+      "id": "ml-training-platform",
+      "category": "Machine Learning",
+      "title": "**Model Training and Serving Platform** (SageMaker/Vertex AI)",
+      "description": "Design an MLOps platform for training, deploying, and serving machine learning models at scale.",
+      "statement": "Design a model training and serving platform like AWS SageMaker or Google Vertex AI.\n\n**Your task:** Create a high-level system design diagram and describe the key components. Include:\n\n- How users submit training jobs with datasets and hyperparameters\n- Your distributed training infrastructure and resource allocation\n- Where and how trained models are stored and versioned\n- How models are deployed and served for online/batch predictions\n- Your choice of database(s) for experiment tracking and metadata\n\nFocus on core training and serving infrastructure. We'll explore model monitoring, A/B testing deployments, and auto-scaling in follow-up questions."
+    },
+    {
       "id": "social-media-feed",
       "category": "Data-Intensive Systems",
       "title": "**Social Media Feed** (BlueSky/Threads)",

@@ -1,14 +1,18 @@
 import { Router, Request, Response } from 'express';
 import type { RoomRegistry } from '../registries/types.js';
+import type { AsyncStateManager } from '../managers/types.js';
+import type { YjsDocManager } from '../managers/YjsDocManager.js';
 import { logger } from '../utils/logger.js';
 
 interface RoomRoutesDependencies {
   roomRegistry: RoomRegistry;
+  stateManager: AsyncStateManager;
+  yjsDocManager: YjsDocManager;
   getBaseUrl: () => string;
 }
 
 export function createRoomRoutes(deps: RoomRoutesDependencies): Router {
-  const { roomRegistry, getBaseUrl } = deps;
+  const { roomRegistry, stateManager, yjsDocManager, getBaseUrl } = deps;
   const router = Router();
 
   // Resolve token to room (public, for guest access)
@@ -117,6 +121,33 @@ export function createRoomRoutes(deps: RoomRoutesDependencies): Router {
       });
     } catch (error) {
       logger.error('Error regenerating token', { error: (error as Error).message });
+      res.status(500).json({
+        success: false,
+        error: (error as Error).message,
+      });
+    }
+  });
+
+  // Reset room content (elements + conversation)
+  router.delete('/api/rooms/:user/:problemId/content', async (req: Request, res: Response) => {
+    try {
+      const { user, problemId } = req.params;
+      const roomId = `${user}/${problemId}`;
+
+      // Clear room content (elements + conversation)
+      await stateManager.deleteRoom(roomId);
+
+      // Clear Yjs document state
+      yjsDocManager.deleteRoom(roomId);
+
+      logger.info('Room content reset', { roomId });
+
+      res.json({
+        success: true,
+        message: 'Room content has been reset',
+      });
+    } catch (error) {
+      logger.error('Error resetting room', { error: (error as Error).message });
       res.status(500).json({
         success: false,
         error: (error as Error).message,
