@@ -14,11 +14,6 @@ interface ResizableMarkdownPanelProps {
   scrollRef: RefObject<HTMLDivElement>;
   hasScrollTop: boolean;
   hasScrollBottom: boolean;
-  onDragStart: () => void;
-  /**
-   * Position of the drag handle
-   */
-  dragHandlePosition?: "top" | "bottom";
   children?: ReactNode;
   /**
    * Optional step navigation - when provided, shows a dropdown instead of static label
@@ -40,8 +35,6 @@ export function ResizableMarkdownPanel({
   scrollRef,
   hasScrollTop,
   hasScrollBottom,
-  onDragStart,
-  dragHandlePosition = "bottom",
   steps,
   totalSteps,
   currentStep,
@@ -187,23 +180,6 @@ export function ResizableMarkdownPanel({
         />
       )}
 
-      {/* Drag handle */}
-      <Box
-        onMouseDown={onDragStart}
-        onTouchStart={onDragStart}
-        sx={{
-          position: "absolute",
-          ...(dragHandlePosition === "bottom"
-            ? { bottom: -4 }
-            : { top: -4 }),
-          left: 0,
-          right: 0,
-          height: "12px",
-          cursor: "ns-resize",
-          zIndex: 1,
-          touchAction: "none",
-        }}
-      />
     </Box>
   );
 }

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { createRef } from "react";
 import { ResizableMarkdownPanel } from "./ResizableMarkdownPanel";
 
@@ -11,7 +11,6 @@ describe("ResizableMarkdownPanel", () => {
     scrollRef: createRef<HTMLDivElement>(),
     hasScrollTop: false,
     hasScrollBottom: false,
-    onDragStart: vi.fn(),
   };
 
   it("renders the label", () => {
@@ -75,38 +74,6 @@ describe("ResizableMarkdownPanel", () => {
     // Should have base structure without extra overlay elements
     const boxes = container.querySelectorAll(".MuiBox-root");
     expect(boxes.length).toBeGreaterThan(0);
-  });
-
-  it("calls onDragStart when drag handle area is clicked", () => {
-    const onDragStart = vi.fn();
-    const { container } = render(
-      <ResizableMarkdownPanel {...defaultProps} onDragStart={onDragStart} />
-    );
-
-    // The drag handle is the last Box child with onMouseDown
-    // We can find it by checking all MuiBox-root elements and triggering mouseDown
-    const boxes = container.querySelectorAll(".MuiBox-root");
-    // The drag handle is positioned absolutely and is one of the child boxes
-    // Trigger mouseDown on each until we find the one that calls onDragStart
-    for (const box of boxes) {
-      fireEvent.mouseDown(box);
-    }
-
-    expect(onDragStart).toHaveBeenCalled();
-  });
-
-  it("renders with different drag handle positions", () => {
-    const { container: bottomContainer } = render(
-      <ResizableMarkdownPanel {...defaultProps} dragHandlePosition="bottom" />
-    );
-
-    const { container: topContainer } = render(
-      <ResizableMarkdownPanel {...defaultProps} dragHandlePosition="top" />
-    );
-
-    // Both should render without errors
-    expect(bottomContainer.firstChild).toBeInTheDocument();
-    expect(topContainer.firstChild).toBeInTheDocument();
   });
 
   it("applies different background when content is empty", () => {

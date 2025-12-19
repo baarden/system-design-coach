@@ -3,8 +3,6 @@ import type { CommentStep } from "../hooks";
 
 interface UserCommentsPanelProps {
   height: number;
-  onDragStart: () => void;
-  onTouchStart: () => void;
   content: string;
   onChange: (value: string) => void;
   isEditable: boolean;
@@ -20,8 +18,6 @@ interface UserCommentsPanelProps {
  */
 export function UserCommentsPanel({
   height,
-  onDragStart,
-  onTouchStart,
   content,
   onChange,
   isEditable,
@@ -41,22 +37,6 @@ export function UserCommentsPanel({
         width: "100%",
       }}
     >
-      {/* Drag handle overlay on top border */}
-      <Box
-        onMouseDown={onDragStart}
-        onTouchStart={onTouchStart}
-        sx={{
-          position: "absolute",
-          top: -4,
-          left: 0,
-          right: 0,
-          height: "12px",
-          cursor: "ns-resize",
-          zIndex: 1,
-          touchAction: "none",
-        }}
-      />
-
       {/* TextField with embedded step selector in border */}
       <Box sx={{ position: "relative", height: "100%" }}>
         {/* Step Dropdown - only shown when there are historical steps */}

@@ -6,6 +6,7 @@ import { ChatWidget } from "./components/ChatWidget";
 import { ResizableMarkdownPanel } from "./components/ResizablePanel";
 import { UserCommentsPanel } from "./components/UserCommentsPanel";
 import { ActionButtons } from "./components/ActionButtons";
+import { ResizeDivider } from "./components/ResizeDivider";
 import { useWebSocketMessages, useFeedbackRequest, useUserCommentSteps, useClaudeFeedbackSteps, useProblemStatementSteps, useYjsComments, useDragResize, useScrollFade, useUnifiedStepNavigation, useDesignPageDialogs } from "./hooks";
 import type { CommentStep, FeedbackStep, ProblemStatementStep } from "./hooks";
 import {
@@ -391,7 +392,6 @@ function DesignPageContent({
           flexDirection: "column",
           overflow: "hidden",
           p: 2,
-          gap: 2,
         }}
       >
         {/* Claude Feedback */}
@@ -402,12 +402,16 @@ function DesignPageContent({
           scrollRef={feedbackScroll.scrollRef}
           hasScrollTop={feedbackScroll.hasScrollTop}
           hasScrollBottom={feedbackScroll.hasScrollBottom}
-          onDragStart={feedbackDrag.handleMouseDown}
           steps={totalRounds >= 2 ? commentSteps : undefined}
           totalSteps={totalRounds >= 2 ? totalRounds : undefined}
           currentStep={totalRounds >= 2 ? (isViewingCurrent ? totalRounds : viewingStepNumber!) : undefined}
           isViewingLatest={isViewingCurrent}
           onStepSelect={totalRounds >= 2 ? selectStep : undefined}
+        />
+        <ResizeDivider
+          onMouseDown={feedbackDrag.handleMouseDown}
+          onTouchStart={feedbackDrag.handleTouchStart}
+          isDragging={feedbackDrag.isDragging}
         />
 
         {/* Problem Statement */}
@@ -418,12 +422,16 @@ function DesignPageContent({
           scrollRef={problemScroll.scrollRef}
           hasScrollTop={problemScroll.hasScrollTop}
           hasScrollBottom={problemScroll.hasScrollBottom}
-          onDragStart={problemDrag.handleMouseDown}
           steps={totalRounds >= 2 ? commentSteps : undefined}
           totalSteps={totalRounds >= 2 ? totalRounds : undefined}
           currentStep={totalRounds >= 2 ? (isViewingCurrent ? totalRounds : viewingStepNumber!) : undefined}
           isViewingLatest={isViewingCurrent}
           onStepSelect={totalRounds >= 2 ? selectStep : undefined}
+        />
+        <ResizeDivider
+          onMouseDown={problemDrag.handleMouseDown}
+          onTouchStart={problemDrag.handleTouchStart}
+          isDragging={problemDrag.isDragging}
         />
 
         {/* Excalidraw Canvas - Fills remaining space */}
@@ -460,12 +468,15 @@ function DesignPageContent({
             }}
           />
         </Box>
+        <ResizeDivider
+          onMouseDown={commentsDrag.handleMouseDown}
+          onTouchStart={commentsDrag.handleTouchStart}
+          isDragging={commentsDrag.isDragging}
+        />
 
-        {/* User Comments with draggable top border */}
+        {/* User Comments */}
         <UserCommentsPanel
           height={commentsDrag.height}
-          onDragStart={commentsDrag.handleMouseDown}
-          onTouchStart={commentsDrag.handleTouchStart}
           content={displayedCommentContent}
           onChange={setYjsComments}
           isEditable={isViewingCurrent}
