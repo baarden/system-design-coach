@@ -2,7 +2,6 @@ import { Box, TextField, Select, MenuItem } from "@mui/material";
 import type { CommentStep } from "../hooks";
 
 interface UserCommentsPanelProps {
-  height: number;
   content: string;
   onChange: (value: string) => void;
   isEditable: boolean;
@@ -17,7 +16,6 @@ interface UserCommentsPanelProps {
  * A panel for displaying and editing user comments with step navigation.
  */
 export function UserCommentsPanel({
-  height,
   content,
   onChange,
   isEditable,
@@ -33,7 +31,7 @@ export function UserCommentsPanel({
     <Box
       sx={{
         position: "relative",
-        height: `${height}px`,
+        height: "100%",
         width: "100%",
       }}
     >

@@ -10,7 +10,6 @@ interface StepInfo {
 interface ResizableMarkdownPanelProps {
   label: string;
   content: string;
-  height: number;
   scrollRef: RefObject<HTMLDivElement>;
   hasScrollTop: boolean;
   hasScrollBottom: boolean;
@@ -31,7 +30,6 @@ interface ResizableMarkdownPanelProps {
 export function ResizableMarkdownPanel({
   label,
   content,
-  height,
   scrollRef,
   hasScrollTop,
   hasScrollBottom,
@@ -80,7 +78,7 @@ export function ResizableMarkdownPanel({
         border: 1,
         borderColor: "divider",
         borderRadius: 1,
-        height: `${height}px`,
+        height: "100%",
         display: "flex",
         flexDirection: "column",
         backgroundColor: hasContent ? "transparent" : "action.hover",

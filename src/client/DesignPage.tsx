@@ -203,25 +203,27 @@ function DesignPageContent({
 
   // Refs
   const containerRef = useRef<HTMLDivElement>(null);
+  const coachPanelRef = useRef<HTMLDivElement>(null);
+  const commentsPanelRef = useRef<HTMLDivElement>(null);
   const submittedCommentsRef = useRef<string>('');
 
   // Resizable panel hooks
   const initialHeight = isSmallScreen ? 80 : 120;
   const coachDrag = useDragResize({
     containerRef,
+    targetRef: coachPanelRef,
     initialHeight,
     minHeight: 80,
     maxHeightRatio: 0.4,
     direction: 'fromTop',
-    offset: 16,
   });
   const commentsDrag = useDragResize({
     containerRef,
+    targetRef: commentsPanelRef,
     initialHeight,
     minHeight: 80,
     maxHeightRatio: 0.4,
     direction: 'fromBottom',
-    offset: 56,
   });
 
   // Scroll fade hooks
@@ -389,19 +391,20 @@ function DesignPageContent({
         }}
       >
         {/* Coach Comments (feedback + problem statement) */}
-        <ResizableMarkdownPanel
-          label="Coach Comments"
-          content={displayedCoachContent}
-          height={coachDrag.height}
-          scrollRef={coachScroll.scrollRef}
-          hasScrollTop={coachScroll.hasScrollTop}
-          hasScrollBottom={coachScroll.hasScrollBottom}
-          steps={totalRounds >= 2 ? commentSteps : undefined}
-          totalSteps={totalRounds >= 2 ? totalRounds : undefined}
-          currentStep={totalRounds >= 2 ? (isViewingCurrent ? totalRounds : viewingStepNumber!) : undefined}
-          isViewingLatest={isViewingCurrent}
-          onStepSelect={totalRounds >= 2 ? selectStep : undefined}
-        />
+        <Box ref={coachPanelRef} sx={{ height: `${coachDrag.height}px` }}>
+          <ResizableMarkdownPanel
+            label="Coach Comments"
+            content={displayedCoachContent}
+            scrollRef={coachScroll.scrollRef}
+            hasScrollTop={coachScroll.hasScrollTop}
+            hasScrollBottom={coachScroll.hasScrollBottom}
+            steps={totalRounds >= 2 ? commentSteps : undefined}
+            totalSteps={totalRounds >= 2 ? totalRounds : undefined}
+            currentStep={totalRounds >= 2 ? (isViewingCurrent ? totalRounds : viewingStepNumber!) : undefined}
+            isViewingLatest={isViewingCurrent}
+            onStepSelect={totalRounds >= 2 ? selectStep : undefined}
+          />
+        </Box>
         <ResizeDivider
           onMouseDown={coachDrag.handleMouseDown}
           onTouchStart={coachDrag.handleTouchStart}
@@ -449,17 +452,18 @@ function DesignPageContent({
         />
 
         {/* User Comments */}
-        <UserCommentsPanel
-          height={commentsDrag.height}
-          content={displayedCommentContent}
-          onChange={setYjsComments}
-          isEditable={isViewingCurrent}
-          steps={commentSteps}
-          totalSteps={totalRounds}
-          currentStep={viewingStepNumber}
-          isViewingLatest={isViewingCurrent}
-          onStepSelect={selectStep}
-        />
+        <Box ref={commentsPanelRef} sx={{ height: `${commentsDrag.height}px` }}>
+          <UserCommentsPanel
+            content={displayedCommentContent}
+            onChange={setYjsComments}
+            isEditable={isViewingCurrent}
+            steps={commentSteps}
+            totalSteps={totalRounds}
+            currentStep={viewingStepNumber}
+            isViewingLatest={isViewingCurrent}
+            onStepSelect={selectStep}
+          />
+        </Box>
 
         {/* Action buttons - only visible to room owner */}
         {isOwner && (

@@ -1,8 +1,9 @@
+import React from "react";
 import { Box } from "@mui/material";
 
 interface ResizeDividerProps {
-  onMouseDown: () => void;
-  onTouchStart: () => void;
+  onMouseDown: (e: React.MouseEvent) => void;
+  onTouchStart: (e: React.TouchEvent) => void;
   isDragging?: boolean;
 }
 

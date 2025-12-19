@@ -7,7 +7,6 @@ describe("ResizableMarkdownPanel", () => {
   const defaultProps = {
     label: "Test Panel",
     content: "Some **markdown** content",
-    height: 200,
     scrollRef: createRef<HTMLDivElement>(),
     hasScrollTop: false,
     hasScrollBottom: false,
@@ -26,13 +25,11 @@ describe("ResizableMarkdownPanel", () => {
     expect(screen.getByText("markdown")).toBeInTheDocument();
   });
 
-  it("applies correct height from props", () => {
-    const { container } = render(
-      <ResizableMarkdownPanel {...defaultProps} height={300} />
-    );
+  it("fills container height", () => {
+    const { container } = render(<ResizableMarkdownPanel {...defaultProps} />);
 
     const panel = container.firstChild as HTMLElement;
-    expect(panel).toHaveStyle({ height: "300px" });
+    expect(panel).toHaveStyle({ height: "100%" });
   });
 
   it("renders additional elements when hasScrollTop is true", () => {

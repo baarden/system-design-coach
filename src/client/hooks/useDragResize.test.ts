@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useDragResize } from "./useDragResize";
 
@@ -22,9 +22,40 @@ describe("useDragResize", () => {
     } as HTMLDivElement,
   });
 
+  // Helper to create a mock React mouse event
+  const createMockMouseEvent = (clientY: number) =>
+    ({ clientY } as React.MouseEvent);
+
+  // Helper to create a mock React touch event
+  const createMockTouchEvent = (clientY: number) =>
+    ({ touches: [{ clientY }] } as unknown as React.TouchEvent);
+
+  // Mock requestAnimationFrame to execute callback synchronously
+  let rafCallback: FrameRequestCallback | null = null;
+  const mockRaf = vi.fn((cb: FrameRequestCallback) => {
+    rafCallback = cb;
+    return 1;
+  });
+  const mockCancelRaf = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
+    rafCallback = null;
+    vi.stubGlobal("requestAnimationFrame", mockRaf);
+    vi.stubGlobal("cancelAnimationFrame", mockCancelRaf);
   });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  // Helper to flush the RAF callback
+  const flushRaf = () => {
+    if (rafCallback) {
+      rafCallback(performance.now());
+      rafCallback = null;
+    }
+  };
 
   it("initializes with default height", () => {
     const containerRef = createMockContainerRef();
@@ -65,68 +96,66 @@ describe("useDragResize", () => {
     );
 
     act(() => {
-      result.current.handleMouseDown();
+      result.current.handleMouseDown(createMockMouseEvent(200));
     });
 
     expect(result.current.isDragging).toBe(true);
   });
 
-  it("calculates height fromTop correctly during drag", () => {
+  it("calculates height fromTop correctly using relative movement", () => {
     const containerRef = createMockContainerRef();
 
     const { result } = renderHook(() =>
       useDragResize({
         containerRef,
         direction: "fromTop",
+        initialHeight: 100,
         minHeight: 50,
-        offset: 0,
       })
     );
 
-    // Start dragging
+    // Start dragging at y=200
     act(() => {
-      result.current.handleMouseDown();
+      result.current.handleMouseDown(createMockMouseEvent(200));
     });
 
-    // Simulate mouse move to y=250 (150px from top of container)
+    // Move mouse down by 50px to y=250
     act(() => {
-      const mouseEvent = new MouseEvent("mousemove", {
-        clientY: 250,
-      });
+      const mouseEvent = new MouseEvent("mousemove", { clientY: 250 });
       document.dispatchEvent(mouseEvent);
+      flushRaf();
     });
 
-    // Height should be clientY - containerTop - offset = 250 - 100 - 0 = 150
+    // Height should increase by 50px: 100 + 50 = 150
     expect(result.current.height).toBe(150);
   });
 
-  it("calculates height fromBottom correctly during drag", () => {
+  it("calculates height fromBottom correctly using relative movement", () => {
     const containerRef = createMockContainerRef();
 
     const { result } = renderHook(() =>
       useDragResize({
         containerRef,
         direction: "fromBottom",
+        initialHeight: 100,
         minHeight: 50,
-        offset: 0,
       })
     );
 
-    // Start dragging
+    // Start dragging at y=400
     act(() => {
-      result.current.handleMouseDown();
+      result.current.handleMouseDown(createMockMouseEvent(400));
     });
 
-    // Simulate mouse move to y=400 (100px from bottom of container)
+    // Move mouse up by 50px to y=350
     act(() => {
-      const mouseEvent = new MouseEvent("mousemove", {
-        clientY: 400,
-      });
+      const mouseEvent = new MouseEvent("mousemove", { clientY: 350 });
       document.dispatchEvent(mouseEvent);
+      flushRaf();
     });
 
-    // Height should be containerBottom - clientY - offset = 500 - 400 - 0 = 100
-    expect(result.current.height).toBe(100);
+    // Height should increase by 50px: 100 + 50 = 150
+    expect(result.current.height).toBe(150);
   });
 
   it("respects minHeight constraint", () => {
@@ -136,20 +165,20 @@ describe("useDragResize", () => {
       useDragResize({
         containerRef,
         direction: "fromTop",
+        initialHeight: 100,
         minHeight: 80,
       })
     );
 
     act(() => {
-      result.current.handleMouseDown();
+      result.current.handleMouseDown(createMockMouseEvent(200));
     });
 
-    // Try to drag to a very small height
+    // Try to drag up by 50px (would result in height of 50, below minHeight)
     act(() => {
-      const mouseEvent = new MouseEvent("mousemove", {
-        clientY: 110, // Would give height of 10px
-      });
+      const mouseEvent = new MouseEvent("mousemove", { clientY: 150 });
       document.dispatchEvent(mouseEvent);
+      flushRaf();
     });
 
     expect(result.current.height).toBe(80); // Should be clamped to minHeight
@@ -162,49 +191,54 @@ describe("useDragResize", () => {
       useDragResize({
         containerRef,
         direction: "fromTop",
+        initialHeight: 100,
         maxHeightRatio: 0.4, // Max 160px (400 * 0.4)
       })
     );
 
     act(() => {
-      result.current.handleMouseDown();
+      result.current.handleMouseDown(createMockMouseEvent(200));
     });
 
-    // Try to drag to a very large height
+    // Try to drag down by 100px (would result in height of 200, above maxHeight)
     act(() => {
-      const mouseEvent = new MouseEvent("mousemove", {
-        clientY: 400, // Would give height of 300px
-      });
+      const mouseEvent = new MouseEvent("mousemove", { clientY: 300 });
       document.dispatchEvent(mouseEvent);
+      flushRaf();
     });
 
     expect(result.current.height).toBe(160); // Should be clamped to maxHeight
   });
 
-  it("applies offset to height calculation", () => {
+  it("handles touch events for drag start", () => {
     const containerRef = createMockContainerRef();
 
     const { result } = renderHook(() =>
       useDragResize({
         containerRef,
         direction: "fromTop",
-        offset: 20,
+        initialHeight: 100,
         minHeight: 50,
       })
     );
 
+    // Start dragging with touch at y=200
     act(() => {
-      result.current.handleMouseDown();
+      result.current.handleTouchStart(createMockTouchEvent(200));
     });
 
+    expect(result.current.isDragging).toBe(true);
+
+    // Move touch down by 30px
     act(() => {
-      const mouseEvent = new MouseEvent("mousemove", {
-        clientY: 250,
+      const touchEvent = new TouchEvent("touchmove", {
+        touches: [{ clientY: 230 } as Touch],
       });
-      document.dispatchEvent(mouseEvent);
+      document.dispatchEvent(touchEvent);
+      flushRaf();
     });
 
-    // Height should be 250 - 100 - 20 = 130
+    // Height should increase by 30px: 100 + 30 = 130
     expect(result.current.height).toBe(130);
   });
 
@@ -219,7 +253,7 @@ describe("useDragResize", () => {
     );
 
     act(() => {
-      result.current.handleMouseDown();
+      result.current.handleMouseDown(createMockMouseEvent(200));
     });
 
     expect(result.current.isDragging).toBe(true);
@@ -245,9 +279,7 @@ describe("useDragResize", () => {
 
     // Don't start dragging, just move mouse
     act(() => {
-      const mouseEvent = new MouseEvent("mousemove", {
-        clientY: 300,
-      });
+      const mouseEvent = new MouseEvent("mousemove", { clientY: 300 });
       document.dispatchEvent(mouseEvent);
     });
 
@@ -265,14 +297,12 @@ describe("useDragResize", () => {
     );
 
     act(() => {
-      result.current.handleMouseDown();
+      result.current.handleMouseDown(createMockMouseEvent(200));
     });
 
     // Should not throw when moving mouse with null ref
     act(() => {
-      const mouseEvent = new MouseEvent("mousemove", {
-        clientY: 300,
-      });
+      const mouseEvent = new MouseEvent("mousemove", { clientY: 300 });
       document.dispatchEvent(mouseEvent);
     });
 
