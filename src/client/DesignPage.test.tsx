@@ -302,16 +302,10 @@ describe("DesignPage", () => {
   });
 
   describe("resizable panels", () => {
-    it("renders Claude Feedback panel", async () => {
+    it("renders Coach Comments panel", async () => {
       renderDesignPage();
 
-      expect(screen.getByText("Claude Feedback")).toBeInTheDocument();
-    });
-
-    it("renders Problem Statement panel", async () => {
-      renderDesignPage();
-
-      expect(screen.getByText("Problem Statement")).toBeInTheDocument();
+      expect(screen.getByText("Coach Comments")).toBeInTheDocument();
     });
   });
 

@@ -24,23 +24,29 @@ describe("useProblemStatementSteps", () => {
     expect(result.current.currentStepContent).toBe("Design a URL shortener");
   });
 
-  it("does not overwrite existing steps when setInitialProblem is called", () => {
+  it("merges server history with original problem from setInitialProblem", () => {
     const { result } = renderHook(() => useProblemStatementSteps());
 
-    const history = [
-      { stepNumber: 1, content: "Problem 1", timestamp: "2024-01-01T00:00:00Z" },
+    // Server sends history (updates only, step 2+) - simulating history arriving first
+    const serverHistory = [
+      { stepNumber: 1, content: "Updated problem", timestamp: "2024-01-02T00:00:00Z" },
     ];
 
     act(() => {
-      result.current.initializeFromHistory(history);
+      result.current.initializeFromHistory(serverHistory);
     });
 
+    // Then fetchProblem resolves and sets the original
     act(() => {
-      result.current.setInitialProblem("Should not overwrite");
+      result.current.setInitialProblem("Original problem");
     });
 
-    expect(result.current.steps).toHaveLength(1);
-    expect(result.current.steps[0].content).toBe("Problem 1");
+    // Original becomes step 1, server history becomes step 2
+    expect(result.current.steps).toHaveLength(2);
+    expect(result.current.steps[0].content).toBe("Original problem");
+    expect(result.current.steps[0].stepNumber).toBe(1);
+    expect(result.current.steps[1].content).toBe("Updated problem");
+    expect(result.current.steps[1].stepNumber).toBe(2);
   });
 
   it("adds next prompt", () => {
@@ -59,64 +65,72 @@ describe("useProblemStatementSteps", () => {
     expect(result.current.currentStepContent).toBe("Updated problem from Claude");
   });
 
-  it("initializes from history", () => {
+  it("initializes from history and renumbers as step 2+", () => {
     const { result } = renderHook(() => useProblemStatementSteps());
 
-    const history = [
-      { stepNumber: 1, content: "Problem 1", timestamp: "2024-01-01T00:00:00Z" },
-      { stepNumber: 2, content: "Problem 2", timestamp: "2024-01-02T00:00:00Z" },
+    // Server sends history with its own numbering (starting at 1)
+    const serverHistory = [
+      { stepNumber: 1, content: "Update 1", timestamp: "2024-01-01T00:00:00Z" },
+      { stepNumber: 2, content: "Update 2", timestamp: "2024-01-02T00:00:00Z" },
     ];
 
     act(() => {
-      result.current.initializeFromHistory(history);
+      result.current.initializeFromHistory(serverHistory);
     });
 
-    expect(result.current.steps).toEqual(history);
+    // History is renumbered as step 2+ (step 1 reserved for original)
     expect(result.current.totalSteps).toBe(2);
-    expect(result.current.currentStepContent).toBe("Problem 2");
+    expect(result.current.steps[0].stepNumber).toBe(2);
+    expect(result.current.steps[0].content).toBe("Update 1");
+    expect(result.current.steps[1].stepNumber).toBe(3);
+    expect(result.current.steps[1].content).toBe("Update 2");
+    expect(result.current.currentStepContent).toBe("Update 2");
   });
 
   it("selects historical step", () => {
     const { result } = renderHook(() => useProblemStatementSteps());
 
-    const history = [
-      { stepNumber: 1, content: "Problem 1", timestamp: "2024-01-01T00:00:00Z" },
-      { stepNumber: 2, content: "Problem 2", timestamp: "2024-01-02T00:00:00Z" },
-    ];
-
+    // Set up: original problem + one update
     act(() => {
-      result.current.initializeFromHistory(history);
+      result.current.setInitialProblem("Original problem");
     });
 
+    act(() => {
+      result.current.addNextPrompt("Updated problem");
+    });
+
+    // Select step 1 (original)
     act(() => {
       result.current.selectStep(1);
     });
 
-    expect(result.current.currentStepContent).toBe("Problem 1");
+    expect(result.current.currentStepContent).toBe("Original problem");
     expect(result.current.isViewingLatestStep).toBe(false);
   });
 
   it("returns to latest step when selecting last step", () => {
     const { result } = renderHook(() => useProblemStatementSteps());
 
-    const history = [
-      { stepNumber: 1, content: "Problem 1", timestamp: "2024-01-01T00:00:00Z" },
-      { stepNumber: 2, content: "Problem 2", timestamp: "2024-01-02T00:00:00Z" },
-    ];
-
+    // Set up: original problem + one update
     act(() => {
-      result.current.initializeFromHistory(history);
+      result.current.setInitialProblem("Original problem");
     });
 
+    act(() => {
+      result.current.addNextPrompt("Updated problem");
+    });
+
+    // Select step 1
     act(() => {
       result.current.selectStep(1);
     });
 
+    // Select step 2 (latest)
     act(() => {
       result.current.selectStep(2);
     });
 
-    expect(result.current.currentStepContent).toBe("Problem 2");
+    expect(result.current.currentStepContent).toBe("Updated problem");
     expect(result.current.isViewingLatestStep).toBe(true);
   });
 });

@@ -65,26 +65,55 @@ export function useProblemStatementSteps(): UseProblemStatementStepsReturn {
     [steps.length]
   );
 
-  // Initialize from server history (includes initial problem + any next prompts)
+  // Initialize from server history (these are updates/next prompts, step 2+)
+  // Server numbers them starting at 1, but they're actually updates that follow the original
   const initializeFromHistory = useCallback((statements: ProblemStatementStep[]) => {
-    setSteps(statements);
-    // Default to latest step
+    setSteps((prev) => {
+      // Renumber server history as step 2+ (original is always step 1)
+      const renumbered = statements.map((item, index) => ({
+        ...item,
+        stepNumber: index + 2,
+      }));
+
+      // If we already have the original (step 1), prepend it
+      const step1 = prev.find(s => s.stepNumber === 1);
+      if (step1) {
+        return [step1, ...renumbered];
+      }
+
+      // No original yet - just store renumbered history (step 1 will be added later)
+      return renumbered;
+    });
     setCurrentStepIndex(-1);
   }, []);
 
   // Set initial problem (called from fetchProblem)
-  // Only sets if no steps exist yet (to avoid overwriting server history)
   const setInitialProblem = useCallback((content: string) => {
     setSteps((prev) => {
-      if (prev.length > 0) {
-        // Already have history from server, don't overwrite
-        return prev;
-      }
-      return [{
+      const step1: ProblemStatementStep = {
         stepNumber: 1,
         content,
         timestamp: new Date().toISOString(),
-      }];
+      };
+
+      if (prev.length === 0) {
+        // No history yet, just set step 1
+        return [step1];
+      }
+
+      // Check if step 1 already exists (from a previous setInitialProblem call)
+      const hasStep1 = prev.some(s => s.stepNumber === 1);
+      if (hasStep1) {
+        // Replace existing step 1, keep the rest
+        return [step1, ...prev.filter(s => s.stepNumber > 1)];
+      }
+
+      // History exists but no step 1 - prepend original and renumber history as step 2+
+      const renumbered = prev.map((item, index) => ({
+        ...item,
+        stepNumber: index + 2,
+      }));
+      return [step1, ...renumbered];
     });
     setCurrentStepIndex(-1);
   }, []);

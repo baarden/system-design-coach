@@ -159,8 +159,7 @@ function DesignPageContent({
     totalRounds,
     isViewingCurrent,
     displayedCommentContent,
-    displayedFeedbackContent,
-    displayedProblemContent,
+    displayedCoachContent,
     selectStep,
     resetToCurrentStep,
   } = useUnifiedStepNavigation({
@@ -172,7 +171,8 @@ function DesignPageContent({
 
   // Reset to current step after submit
   const handleResetAfterSubmit = useCallback(() => {
-    resetAfterSubmit();
+    resetAfterSubmit(submittedCommentsRef.current);
+    submittedCommentsRef.current = '';
     resetToCurrentStep();
     setYjsComments('');
   }, [resetAfterSubmit, resetToCurrentStep, setYjsComments]);
@@ -203,24 +203,17 @@ function DesignPageContent({
 
   // Refs
   const containerRef = useRef<HTMLDivElement>(null);
+  const submittedCommentsRef = useRef<string>('');
 
   // Resizable panel hooks
   const initialHeight = isSmallScreen ? 80 : 120;
-  const feedbackDrag = useDragResize({
+  const coachDrag = useDragResize({
     containerRef,
     initialHeight,
     minHeight: 80,
     maxHeightRatio: 0.4,
     direction: 'fromTop',
     offset: 16,
-  });
-  const problemDrag = useDragResize({
-    containerRef,
-    initialHeight,
-    minHeight: 80,
-    maxHeightRatio: 0.4,
-    direction: 'fromTop',
-    offset: feedbackDrag.height + 32,
   });
   const commentsDrag = useDragResize({
     containerRef,
@@ -232,8 +225,7 @@ function DesignPageContent({
   });
 
   // Scroll fade hooks
-  const feedbackScroll = useScrollFade();
-  const problemScroll = useScrollFade();
+  const coachScroll = useScrollFade();
 
   const excalidrawApiRef = useRef<{
     send: (message: unknown) => void;
@@ -271,7 +263,7 @@ function DesignPageContent({
 
   // Feedback request hook - use Yjs-synced comments
   const {
-    handleGetFeedback,
+    handleGetFeedback: sendFeedbackRequest,
     isFeedbackLoading,
     setIsFeedbackLoading,
     pendingEventIdRef,
@@ -282,6 +274,12 @@ function DesignPageContent({
     userComments: yjsComments,
     onError: setErrorMessage,
   });
+
+  // Wrapper to capture comments before sending feedback request
+  const handleGetFeedback = useCallback(async () => {
+    submittedCommentsRef.current = yjsComments;
+    await sendFeedbackRequest();
+  }, [yjsComments, sendFeedbackRequest]);
 
   // WebSocket message handlers
   const messageHandlers = useMemo(
@@ -363,12 +361,8 @@ function DesignPageContent({
 
   // Re-check scroll state when content changes
   useEffect(() => {
-    feedbackScroll.checkScroll();
-  }, [displayedFeedbackContent, feedbackScroll]);
-
-  useEffect(() => {
-    problemScroll.checkScroll();
-  }, [displayedProblemContent, problemScroll]);
+    coachScroll.checkScroll();
+  }, [displayedCoachContent, coachScroll]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
@@ -394,14 +388,14 @@ function DesignPageContent({
           p: 2,
         }}
       >
-        {/* Claude Feedback */}
+        {/* Coach Comments (feedback + problem statement) */}
         <ResizableMarkdownPanel
-          label="Claude Feedback"
-          content={displayedFeedbackContent}
-          height={feedbackDrag.height}
-          scrollRef={feedbackScroll.scrollRef}
-          hasScrollTop={feedbackScroll.hasScrollTop}
-          hasScrollBottom={feedbackScroll.hasScrollBottom}
+          label="Coach Comments"
+          content={displayedCoachContent}
+          height={coachDrag.height}
+          scrollRef={coachScroll.scrollRef}
+          hasScrollTop={coachScroll.hasScrollTop}
+          hasScrollBottom={coachScroll.hasScrollBottom}
           steps={totalRounds >= 2 ? commentSteps : undefined}
           totalSteps={totalRounds >= 2 ? totalRounds : undefined}
           currentStep={totalRounds >= 2 ? (isViewingCurrent ? totalRounds : viewingStepNumber!) : undefined}
@@ -409,29 +403,9 @@ function DesignPageContent({
           onStepSelect={totalRounds >= 2 ? selectStep : undefined}
         />
         <ResizeDivider
-          onMouseDown={feedbackDrag.handleMouseDown}
-          onTouchStart={feedbackDrag.handleTouchStart}
-          isDragging={feedbackDrag.isDragging}
-        />
-
-        {/* Problem Statement */}
-        <ResizableMarkdownPanel
-          label="Problem Statement"
-          content={displayedProblemContent}
-          height={problemDrag.height}
-          scrollRef={problemScroll.scrollRef}
-          hasScrollTop={problemScroll.hasScrollTop}
-          hasScrollBottom={problemScroll.hasScrollBottom}
-          steps={totalRounds >= 2 ? commentSteps : undefined}
-          totalSteps={totalRounds >= 2 ? totalRounds : undefined}
-          currentStep={totalRounds >= 2 ? (isViewingCurrent ? totalRounds : viewingStepNumber!) : undefined}
-          isViewingLatest={isViewingCurrent}
-          onStepSelect={totalRounds >= 2 ? selectStep : undefined}
-        />
-        <ResizeDivider
-          onMouseDown={problemDrag.handleMouseDown}
-          onTouchStart={problemDrag.handleTouchStart}
-          isDragging={problemDrag.isDragging}
+          onMouseDown={coachDrag.handleMouseDown}
+          onTouchStart={coachDrag.handleTouchStart}
+          isDragging={coachDrag.isDragging}
         />
 
         {/* Excalidraw Canvas - Fills remaining space */}
@@ -489,12 +463,14 @@ function DesignPageContent({
 
         {/* Action buttons - only visible to room owner */}
         {isOwner && (
-          <ActionButtons
-            onGetFeedback={handleGetFeedback}
-            onResetProblem={openResetDialog}
-            isFeedbackLoading={isFeedbackLoading}
-            isResetting={isResetting}
-          />
+          <Box sx={{ mt: 2 }}>
+            <ActionButtons
+              onGetFeedback={handleGetFeedback}
+              onResetProblem={openResetDialog}
+              isFeedbackLoading={isFeedbackLoading}
+              isResetting={isResetting}
+            />
+          </Box>
         )}
       </Box>
 

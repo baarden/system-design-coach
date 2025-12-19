@@ -21,7 +21,7 @@ interface UseUserCommentStepsReturn {
   setLatestDraft: (draft: string) => void;
   selectStep: (stepNumber: number) => void;
   initializeFromHistory: (comments: CommentStep[]) => void;
-  resetAfterSubmit: () => void;
+  resetAfterSubmit: (submittedComments?: string) => void;
 }
 
 export function useUserCommentSteps(): UseUserCommentStepsReturn {
@@ -72,12 +72,14 @@ export function useUserCommentSteps(): UseUserCommentStepsReturn {
   }, []);
 
   // Reset after submit: clear draft, add submitted content to history
-  const resetAfterSubmit = useCallback(() => {
-    // Move latestDraft to steps array if it has content
-    if (latestDraft.trim()) {
+  const resetAfterSubmit = useCallback((submittedComments?: string) => {
+    // Use provided comments or fall back to latestDraft
+    const contentToSave = submittedComments ?? latestDraft;
+    // Move content to steps array if it has content
+    if (contentToSave.trim()) {
       const newStep: CommentStep = {
         stepNumber: steps.length + 1,
-        content: latestDraft,
+        content: contentToSave,
         timestamp: new Date().toISOString(),
       };
       setSteps((prev) => [...prev, newStep]);

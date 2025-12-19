@@ -15,8 +15,7 @@ interface UseUnifiedStepNavigationReturn {
   totalRounds: number;
   isViewingCurrent: boolean;
   displayedCommentContent: string;
-  displayedFeedbackContent: string;
-  displayedProblemContent: string;
+  displayedCoachContent: string;
   selectStep: (stepNumber: number) => void;
   resetToCurrentStep: () => void;
 }
@@ -47,7 +46,8 @@ export function useUnifiedStepNavigation({
     return commentSteps[viewingStepNumber! - 1]?.content ?? '';
   }, [isViewingCurrent, viewingStepNumber, commentSteps, currentComments]);
 
-  const displayedFeedbackContent = useMemo(() => {
+  // Compute feedback content for the current step
+  const feedbackContent = useMemo(() => {
     if (feedbackSteps.length === 0) return '';
     if (isViewingCurrent) return feedbackSteps[feedbackSteps.length - 1]?.content ?? '';
     // Step 1 has no feedback (feedback comes after first submission)
@@ -57,13 +57,26 @@ export function useUnifiedStepNavigation({
     return stepIndex >= 0 ? feedbackSteps[stepIndex]?.content ?? '' : '';
   }, [isViewingCurrent, viewingStepNumber, feedbackSteps]);
 
-  const displayedProblemContent = useMemo(() => {
+  // Compute problem content for the current step
+  const problemContent = useMemo(() => {
     if (problemSteps.length === 0) return '';
     if (isViewingCurrent) return problemSteps[problemSteps.length - 1]?.content ?? '';
     // Show problem statement for this step, or latest available if step doesn't exist
     const stepIndex = Math.min(viewingStepNumber! - 1, problemSteps.length - 1);
     return problemSteps[stepIndex]?.content ?? '';
   }, [isViewingCurrent, viewingStepNumber, problemSteps]);
+
+  // Combined coach content: feedback (if any) + problem statement with prefix
+  const displayedCoachContent = useMemo(() => {
+    const problemWithPrefix = problemContent
+      ? `**Current problem statement:**\n\n${problemContent}`
+      : '';
+
+    if (feedbackContent) {
+      return `${feedbackContent}\n\n${problemWithPrefix}`;
+    }
+    return problemWithPrefix;
+  }, [feedbackContent, problemContent]);
 
   // Unified step selector
   const selectStep = useCallback((stepNumber: number) => {
@@ -84,8 +97,7 @@ export function useUnifiedStepNavigation({
     totalRounds,
     isViewingCurrent,
     displayedCommentContent,
-    displayedFeedbackContent,
-    displayedProblemContent,
+    displayedCoachContent,
     selectStep,
     resetToCurrentStep,
   };
