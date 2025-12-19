@@ -141,9 +141,22 @@ setupWebSocketHandlers({ wss, stateManager, clientManager, yjsDocManager, feedba
 // Serve static files in production
 if (process.env.NODE_ENV === "production") {
   const clientPath = path.join(__dirname, "../../client");
-  app.use(express.static(clientPath));
 
-  app.get("*", (req: Request, res: Response) => {
+  // Hashed assets (JS/CSS) can be cached forever - Vite includes content hash in filename
+  app.use(
+    "/assets",
+    express.static(path.join(clientPath, "assets"), {
+      maxAge: "1y",
+      immutable: true,
+    })
+  );
+
+  // Other static files with short cache
+  app.use(express.static(clientPath, { maxAge: "1h" }));
+
+  // SPA fallback - index.html should never be cached
+  app.get("*", (_req: Request, res: Response) => {
+    res.set("Cache-Control", "no-cache, no-store, must-revalidate");
     res.sendFile(path.join(clientPath, "index.html"));
   });
 }
