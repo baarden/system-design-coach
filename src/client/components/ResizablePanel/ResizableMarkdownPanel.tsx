@@ -22,6 +22,14 @@ interface ResizableMarkdownPanelProps {
   currentStep?: number;
   isViewingLatest?: boolean;
   onStepSelect?: (stepNumber: number) => void;
+  /**
+   * Whether to show square (non-rounded) top corners - used when tabs are above
+   */
+  squareTopCorners?: boolean;
+  /**
+   * Whether to hide the label/dropdown - used when tabs provide the label
+   */
+  hideLabel?: boolean;
 }
 
 /**
@@ -38,6 +46,8 @@ export function ResizableMarkdownPanel({
   currentStep,
   isViewingLatest,
   onStepSelect,
+  squareTopCorners = false,
+  hideLabel = false,
 }: ResizableMarkdownPanelProps) {
   const theme = useTheme();
   const hasContent = content?.trim();
@@ -77,7 +87,7 @@ export function ResizableMarkdownPanel({
         position: "relative",
         border: 1,
         borderColor: "divider",
-        borderRadius: 1,
+        borderRadius: squareTopCorners ? '0 0 4px 4px' : 1,
         height: "100%",
         display: "flex",
         flexDirection: "column",
@@ -94,14 +104,18 @@ export function ResizableMarkdownPanel({
           disableUnderline
           sx={{
             position: "absolute",
-            top: -10,
+            top: { xs: 8, sm: -10 },
             left: 8,
             zIndex: 2,
             backgroundColor: "background.paper",
             px: 0.5,
             fontSize: "0.75rem",
+            // Add visual prominence on mobile
+            border: { xs: 1, sm: 0 },
+            borderColor: { xs: "divider", sm: "transparent" },
+            borderRadius: { xs: 1, sm: 0 },
             "& .MuiSelect-select": {
-              py: 0,
+              py: { xs: 0.5, sm: 0 },
               pr: 2,
               color: isViewingLatest ? "text.secondary" : "warning.main",
             },
@@ -111,34 +125,36 @@ export function ResizableMarkdownPanel({
             },
           }}
         >
-          {steps.map((step) => (
+          {steps!.map((step) => (
             <MenuItem key={step.stepNumber} value={step.stepNumber} sx={{ fontSize: "0.875rem" }}>
               {label} [step {step.stepNumber}]
             </MenuItem>
           ))}
           {/* Current step (if there are historical steps) */}
-          {steps.length > 0 && steps.length < totalSteps && (
+          {steps!.length > 0 && steps!.length < totalSteps! && (
             <MenuItem value={totalSteps} sx={{ fontSize: "0.875rem" }}>
               {label} [step {totalSteps}] (current)
             </MenuItem>
           )}
         </Select>
       ) : (
-        <Typography
-          variant="caption"
-          sx={{
-            position: "absolute",
-            top: -9,
-            left: 8,
-            px: 0.5,
-            backgroundColor: "background.paper",
-            color: "text.secondary",
-            fontSize: "0.75rem",
-            zIndex: 1,
-          }}
-        >
-          {label}
-        </Typography>
+        !hideLabel && (
+          <Typography
+            variant="caption"
+            sx={{
+              position: "absolute",
+              top: -9,
+              left: 8,
+              px: 0.5,
+              backgroundColor: "background.paper",
+              color: "text.secondary",
+              fontSize: "0.75rem",
+              zIndex: 1,
+            }}
+          >
+            {label}
+          </Typography>
+        )
       )}
 
       {/* Content area */}

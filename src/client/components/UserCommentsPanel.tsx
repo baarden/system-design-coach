@@ -37,59 +37,60 @@ export function UserCommentsPanel({
     >
       {/* TextField with embedded step selector in border */}
       <Box sx={{ position: "relative", height: "100%" }}>
-        {/* Step Dropdown - only shown when there are historical steps */}
-        {showDropdown ? (
+        {/* Label on left */}
+        <Box
+          component="span"
+          sx={{
+            position: "absolute",
+            top: -9,
+            left: 8,
+            zIndex: 1,
+            backgroundColor: "background.paper",
+            px: 0.5,
+            color: "text.secondary",
+            fontSize: "0.75rem",
+          }}
+        >
+          User Comments
+        </Box>
+
+        {/* Dropdown on right */}
+        {showDropdown && (
           <Select
             size="small"
             value={isViewingLatest ? totalSteps : currentStep}
             onChange={(e) => onStepSelect(Number(e.target.value))}
             variant="standard"
-            disableUnderline
             sx={{
               position: "absolute",
-              top: -10,
-              left: 8,
+              top: -9,
+              right: 8,
               zIndex: 1,
               backgroundColor: "background.paper",
               px: 0.5,
               fontSize: "0.75rem",
               "& .MuiSelect-select": {
                 py: 0,
-                pr: "20px !important",
-                fontSize: "0.75rem",
                 color: isViewingLatest ? "text.secondary" : "warning.main",
               },
               "& .MuiSvgIcon-root": {
                 fontSize: "1rem",
-                right: 0,
+                color: isViewingLatest ? "text.secondary" : "warning.main",
+              },
+              "&:before, &:after": {
+                display: "none",
               },
             }}
           >
             {steps.map((step) => (
               <MenuItem key={step.stepNumber} value={step.stepNumber} sx={{ fontSize: "0.875rem" }}>
-                User comments [step {step.stepNumber}]
+                Step {step.stepNumber}
               </MenuItem>
             ))}
             <MenuItem value={totalSteps} sx={{ fontSize: "0.875rem" }}>
-              User comments [step {totalSteps}] (current)
+              Step {totalSteps}
             </MenuItem>
           </Select>
-        ) : (
-          <Box
-            component="span"
-            sx={{
-              position: "absolute",
-              top: -9,
-              left: 8,
-              px: 0.5,
-              backgroundColor: "background.paper",
-              color: "text.secondary",
-              fontSize: "0.75rem",
-              zIndex: 1,
-            }}
-          >
-            User comments
-          </Box>
         )}
 
         {/* TextField - uses Yjs for real-time collaboration */}

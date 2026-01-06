@@ -3,7 +3,7 @@ import { useParams, Navigate, Link } from "react-router-dom";
 import { ExcalidrawClient } from "./components/ExcalidrawClient";
 import { useAuth } from "./providers/auth";
 import { ChatWidget } from "./components/ChatWidget";
-import { ResizableMarkdownPanel } from "./components/ResizablePanel";
+import { CoachCommentsPanel } from "./components/CoachCommentsPanel";
 import { UserCommentsPanel } from "./components/UserCommentsPanel";
 import { ActionButtons } from "./components/ActionButtons";
 import { ResizeDivider } from "./components/ResizeDivider";
@@ -159,7 +159,11 @@ function DesignPageContent({
     totalRounds,
     isViewingCurrent,
     displayedCommentContent,
-    displayedCoachContent,
+    displayedFeedbackContent,
+    originalProblemStatement,
+    activeCoachTab,
+    setActiveCoachTab,
+    isFeedbackTabEnabled,
     selectStep,
     resetToCurrentStep,
   } = useUnifiedStepNavigation({
@@ -364,7 +368,7 @@ function DesignPageContent({
   // Re-check scroll state when content changes
   useEffect(() => {
     coachScroll.checkScroll();
-  }, [displayedCoachContent, coachScroll]);
+  }, [displayedFeedbackContent, originalProblemStatement, activeCoachTab, coachScroll]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
@@ -392,17 +396,20 @@ function DesignPageContent({
       >
         {/* Coach Comments (feedback + problem statement) */}
         <Box ref={coachPanelRef} sx={{ height: `${coachDrag.height}px` }}>
-          <ResizableMarkdownPanel
-            label="Coach Comments"
-            content={displayedCoachContent}
+          <CoachCommentsPanel
+            activeTab={activeCoachTab}
+            onTabChange={setActiveCoachTab}
+            isFeedbackTabEnabled={isFeedbackTabEnabled}
+            problemStatementContent={originalProblemStatement}
+            feedbackContent={displayedFeedbackContent}
             scrollRef={coachScroll.scrollRef}
             hasScrollTop={coachScroll.hasScrollTop}
             hasScrollBottom={coachScroll.hasScrollBottom}
-            steps={totalRounds >= 2 ? commentSteps : undefined}
-            totalSteps={totalRounds >= 2 ? totalRounds : undefined}
-            currentStep={totalRounds >= 2 ? (isViewingCurrent ? totalRounds : viewingStepNumber!) : undefined}
+            steps={feedbackSteps}
+            totalSteps={totalRounds}
+            currentStep={isViewingCurrent ? totalRounds : viewingStepNumber!}
             isViewingLatest={isViewingCurrent}
-            onStepSelect={totalRounds >= 2 ? selectStep : undefined}
+            onStepSelect={selectStep}
           />
         </Box>
         <ResizeDivider

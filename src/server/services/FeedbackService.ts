@@ -144,7 +144,7 @@ export class FeedbackService {
       const feedbackTool: AITool = {
         name: "give_system_design_feedback",
         description:
-          'Send feedback to the user on their system design diagram and comments. To help the user see which ambiguous diagram components you are referencing (and only ambiguous components), use diagram_changes to add numbered labels to those elements, then reference those numbers in your feedback text (e.g., "The first database [1] should...").',
+          'Send feedback to the user on their system design diagram and comments. When your feedback references ambiguous diagram components (components with duplicate names or unclear identity), use diagram_changes to add numbered labels to ONLY those specific elements you discuss, then reference those numbers in your feedback text (e.g., "The first database [1] should..."). Every label you create must be referenced in your feedback.',
         input_schema: {
           type: "object" as const,
           properties: {
@@ -172,7 +172,7 @@ export class FeedbackService {
                 required: ["objectId", "number"],
               },
               description:
-                "Labels to add to ambiguous diagram objects. ONLY label components when multiple objects share the same name or are otherwise indistinguishable. If a component has a unique name in the diagram, reference it directly by name in your feedback text without adding a label.",
+                "Labels to add to ambiguous diagram objects that you are discussing in your feedback. ONLY add labels for components that: (1) you are actively referencing in your feedback text, AND (2) have ambiguous names or are otherwise indistinguishable from other components. Every label added here MUST be referenced in your feedback using [1], [2], etc. If a component has a unique name, reference it directly by name without adding a label. Do not add labels for components you don't mention in your feedback.",
             },
             next_prompt: {
               type: "string",

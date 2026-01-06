@@ -1,7 +1,9 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import type { CommentStep } from "./useUserCommentSteps";
 import type { FeedbackStep } from "./useClaudeFeedbackSteps";
 import type { ProblemStatementStep } from "./useProblemStatementSteps";
+
+export type CoachTab = 'problem' | 'feedback';
 
 interface UseUnifiedStepNavigationOptions {
   commentSteps: CommentStep[];
@@ -15,7 +17,11 @@ interface UseUnifiedStepNavigationReturn {
   totalRounds: number;
   isViewingCurrent: boolean;
   displayedCommentContent: string;
-  displayedCoachContent: string;
+  displayedFeedbackContent: string;
+  originalProblemStatement: string;
+  activeCoachTab: CoachTab;
+  setActiveCoachTab: (tab: CoachTab) => void;
+  isFeedbackTabEnabled: boolean;
   selectStep: (stepNumber: number) => void;
   resetToCurrentStep: () => void;
 }
@@ -32,6 +38,12 @@ export function useUnifiedStepNavigation({
 }: UseUnifiedStepNavigationOptions): UseUnifiedStepNavigationReturn {
   // null = viewing current/latest, number = viewing historical step
   const [viewingStepNumber, setViewingStepNumber] = useState<number | null>(null);
+
+  // Tab state for Coach Comments panel
+  const [activeTab, setActiveTab] = useState<CoachTab>('problem');
+
+  // Track if we've already auto-switched to feedback tab (to avoid interfering with manual tab selection)
+  const hasAutoSwitchedRef = useRef(false);
 
   // Total rounds based on user comments (which drives interaction rounds)
   // +1 for the current editable step
@@ -66,10 +78,11 @@ export function useUnifiedStepNavigation({
     return problemSteps[stepIndex]?.content ?? '';
   }, [isViewingCurrent, viewingStepNumber, problemSteps]);
 
-  // Combined coach content: feedback (if any) + problem statement with prefix
-  const displayedCoachContent = useMemo(() => {
+  // Separated content for tabs
+  // Feedback content includes current problem statement appended
+  const displayedFeedbackContent = useMemo(() => {
     const problemWithPrefix = problemContent
-      ? `**Current problem statement:**\n\n${problemContent}`
+      ? `**Next up:**\n\n${problemContent}`
       : '';
 
     if (feedbackContent) {
@@ -77,6 +90,17 @@ export function useUnifiedStepNavigation({
     }
     return problemWithPrefix;
   }, [feedbackContent, problemContent]);
+
+  const originalProblemStatement = problemSteps[0]?.content ?? '';
+  const isFeedbackTabEnabled = feedbackSteps.length > 0;
+
+  // Auto-switch to feedback tab when first feedback arrives (only once)
+  useEffect(() => {
+    if (feedbackSteps.length > 0 && !hasAutoSwitchedRef.current) {
+      setActiveTab('feedback');
+      hasAutoSwitchedRef.current = true;
+    }
+  }, [feedbackSteps.length]);
 
   // Unified step selector
   const selectStep = useCallback((stepNumber: number) => {
@@ -97,7 +121,11 @@ export function useUnifiedStepNavigation({
     totalRounds,
     isViewingCurrent,
     displayedCommentContent,
-    displayedCoachContent,
+    displayedFeedbackContent,
+    originalProblemStatement,
+    activeCoachTab: activeTab,
+    setActiveCoachTab: setActiveTab,
+    isFeedbackTabEnabled,
     selectStep,
     resetToCurrentStep,
   };
