@@ -257,7 +257,7 @@ export default function ChatWidget({
                 >
                   {msg.direction === "incoming" ? (
                     <Message.CustomContent>
-                      <div className="chat-bot-message-markdown">
+                      <div className="markdown-content">
                         <ReactMarkdown>{msg.content}</ReactMarkdown>
                       </div>
                     </Message.CustomContent>

@@ -20,6 +20,7 @@ export function useScrollFade(): UseScrollFadeReturn {
     if (!element) return;
 
     const { scrollTop, scrollHeight, clientHeight } = element;
+
     setHasScrollTop(scrollTop > 0);
     setHasScrollBottom(scrollTop + clientHeight < scrollHeight - 1);
   }, []);
@@ -32,7 +33,17 @@ export function useScrollFade(): UseScrollFadeReturn {
     checkScroll();
 
     element.addEventListener("scroll", checkScroll);
-    return () => element.removeEventListener("scroll", checkScroll);
+
+    // Re-check when content size changes using ResizeObserver
+    const resizeObserver = new ResizeObserver(() => {
+      checkScroll();
+    });
+    resizeObserver.observe(element);
+
+    return () => {
+      element.removeEventListener("scroll", checkScroll);
+      resizeObserver.disconnect();
+    };
   }, [checkScroll]);
 
   return { scrollRef, hasScrollTop, hasScrollBottom, checkScroll };

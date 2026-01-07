@@ -469,6 +469,7 @@ function DesignPageContent({
             currentStep={viewingStepNumber}
             isViewingLatest={isViewingCurrent}
             onStepSelect={selectStep}
+            yText={yComments}
           />
         </Box>
 

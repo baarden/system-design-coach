@@ -1,0 +1,71 @@
+/* Shared markdown styles for react-markdown and Milkdown */
+.markdown-content {
+  text-align: left;
+  line-height: 1.35 !important;
+}
+
+.markdown-content p,
+.markdown-content ul,
+.markdown-content ol {
+  margin: 0 !important;
+  line-height: 1.35 !important;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 1.2em;
+}
+
+.markdown-content ul li,
+.markdown-content ol li,
+.markdown-content li {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.35 !important;
+}
+
+/* Handle paragraphs inside list items (created when markdown has blank lines between items) */
+.markdown-content li p {
+  margin: 0 !important;
+}
+
+.markdown-content code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+[data-theme="dark"] .markdown-content code {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.markdown-content pre {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.75em;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 0.5em 0;
+}
+
+[data-theme="dark"] .markdown-content pre {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.markdown-content pre code {
+  background: none;
+  padding: 0;
+}
+
+.markdown-content strong {
+  font-weight: 600;
+}
+
+.markdown-content em {
+  font-style: italic;
+}
+
+.markdown-content a {
+  color: #1976d2;
+  text-decoration: underline;
+}

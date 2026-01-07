@@ -1,6 +1,8 @@
 import { ReactNode, RefObject } from "react";
 import { Box, Typography, useTheme, Select, MenuItem } from "@mui/material";
 import ReactMarkdown from "react-markdown";
+import type * as Y from "yjs";
+import { MilkdownEditor } from "../MilkdownEditor";
 
 interface StepInfo {
   stepNumber: number;
@@ -30,6 +32,18 @@ interface ResizableMarkdownPanelProps {
    * Whether to hide the label/dropdown - used when tabs provide the label
    */
   hideLabel?: boolean;
+  /**
+   * Whether the content is editable (Milkdown editor) or read-only (ReactMarkdown)
+   */
+  editable?: boolean;
+  /**
+   * Yjs Y.Text for collaborative editing (required when editable=true)
+   */
+  yText?: Y.Text | null;
+  /**
+   * Callback when markdown content changes in editor
+   */
+  onContentChange?: (content: string) => void;
 }
 
 /**
@@ -48,9 +62,11 @@ export function ResizableMarkdownPanel({
   onStepSelect,
   squareTopCorners = false,
   hideLabel = false,
+  editable = false,
+  yText,
+  onContentChange,
 }: ResizableMarkdownPanelProps) {
   const theme = useTheme();
-  const hasContent = content?.trim();
   const showDropdown = steps && totalSteps !== undefined && totalSteps > 0 && onStepSelect;
 
   const bgColor = theme.palette.background.paper;
@@ -58,27 +74,12 @@ export function ResizableMarkdownPanel({
   const markdownStyles = {
     flex: 1,
     overflow: "auto",
-    p: 2,
-    pt: 2.5,
+    px: 2,
+    pt: '10px',
+    pb: 0,
     fontSize: { xs: "0.875rem", sm: "1rem" },
-    lineHeight: 1.5,
-    "& p": { margin: "0.5em 0" },
-    "& p:first-of-type": { marginTop: 0 },
-    "& p:last-of-type": { marginBottom: 0 },
-    "& ul, & ol": { margin: "0.5em 0", paddingLeft: "1.5em" },
-    "& li": { margin: "0.25em 0" },
-    "& code": {
-      backgroundColor: theme.palette.action.hover,
-      padding: "0.2em 0.4em",
-      borderRadius: "3px",
-      fontSize: "0.875em",
-    },
-    "& pre": {
-      backgroundColor: theme.palette.action.hover,
-      padding: "1em",
-      borderRadius: "4px",
-      overflow: "auto",
-    },
+    // Let CSS classes (markdown.css, MilkdownEditor.css) control line-height and spacing
+    // to ensure consistency between ReactMarkdown and Milkdown editor
   };
 
   return (
@@ -91,7 +92,7 @@ export function ResizableMarkdownPanel({
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        backgroundColor: hasContent ? "transparent" : "action.hover",
+        backgroundColor: editable ? "transparent" : "action.hover",
       }}
     >
       {/* Label or Step Dropdown */}
@@ -159,7 +160,13 @@ export function ResizableMarkdownPanel({
 
       {/* Content area */}
       <Box ref={scrollRef} sx={markdownStyles}>
-        <ReactMarkdown>{content}</ReactMarkdown>
+        <div className="markdown-content">
+          {editable && yText ? (
+            <MilkdownEditor yText={yText} onUpdate={onContentChange} />
+          ) : (
+            <ReactMarkdown>{content}</ReactMarkdown>
+          )}
+        </div>
       </Box>
 
       {/* Top fade overlay */}

@@ -1,0 +1,116 @@
+/* Milkdown editor styling fixes */
+
+/* Wrapper for Milkdown editor */
+.milkdown-wrapper {
+  width: 100%;
+  line-height: 1.35;
+}
+
+/* ProseMirror base styles */
+.ProseMirror {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Remove outline from ProseMirror */
+.ProseMirror {
+  outline: none;
+}
+
+/* Ensure placeholder doesn't interfere with clicks */
+.ProseMirror .placeholder {
+  pointer-events: none;
+}
+
+/* Fix scroll fade issue by removing all paragraph margins */
+/* The parent Box applies "& p": { margin: "0.5em 0" } which adds extra height */
+.milkdown-wrapper p {
+  margin: 0 !important;
+}
+
+/* Make trailing break not contribute to height while keeping it for cursor positioning */
+.ProseMirror-trailingBreak {
+  height: 0 !important;
+  line-height: 0 !important;
+  font-size: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Apply markdown content styling to Milkdown editor */
+.milkdown,
+[data-milkdown-root] {
+  text-align: left;
+  line-height: 1.35 !important;
+}
+
+.milkdown p,
+.ProseMirror p {
+  margin: 0 !important;
+  line-height: 1.35 !important;
+}
+
+.milkdown ul,
+.milkdown ol,
+.ProseMirror ul,
+.ProseMirror ol {
+  margin: 0 !important;
+  padding-left: 1.2em;
+  line-height: 1.35 !important;
+}
+
+.milkdown li,
+.ProseMirror li {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.35 !important;
+}
+
+.milkdown code,
+.ProseMirror code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+[data-theme="dark"] .milkdown code,
+[data-theme="dark"] .ProseMirror code {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.milkdown pre,
+.ProseMirror pre {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.75em;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 0.5em 0;
+}
+
+[data-theme="dark"] .milkdown pre,
+[data-theme="dark"] .ProseMirror pre {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.milkdown pre code,
+.ProseMirror pre code {
+  background: none;
+  padding: 0;
+}
+
+.milkdown strong,
+.ProseMirror strong {
+  font-weight: 600;
+}
+
+.milkdown em,
+.ProseMirror em {
+  font-style: italic;
+}
+
+.milkdown a,
+.ProseMirror a {
+  color: #1976d2;
+  text-decoration: underline;
+}
