@@ -29,6 +29,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, mode);
+    // Set data-theme attribute on document root for CSS styling
+    document.documentElement.setAttribute('data-theme', mode);
   }, [mode]);
 
   const toggleTheme = () => {

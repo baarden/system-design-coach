@@ -1,21 +1,26 @@
-import React, { useEffect } from "react";
+import { useEffect, useImperativeHandle, forwardRef } from "react";
 import type * as Y from "yjs";
 import { MilkdownProvider, Milkdown, useEditor } from "@milkdown/react";
-import { Editor, rootCtx, defaultValueCtx } from "@milkdown/kit/core";
+import { Editor, rootCtx, defaultValueCtx, editorViewCtx } from "@milkdown/kit/core";
 import type { Ctx } from "@milkdown/ctx";
 import { commonmark } from "@milkdown/preset-commonmark";
 import { history } from "@milkdown/plugin-history";
 import { collab, collabServiceCtx } from "@milkdown/plugin-collab";
 import { listener, listenerCtx } from "@milkdown/plugin-listener";
 import { $prose } from "@milkdown/utils";
-import { Plugin, PluginKey } from "@milkdown/prose/state";
-import { Selection } from "@milkdown/prose/state";
+import { Plugin, PluginKey, Selection } from "@milkdown/prose/state";
+import { codeBlockView } from "./codeBlockView";
+import { jsonCodeBlockInputRule } from "./jsonInputRule";
 import "../../styles/markdown.css";
 import "./MilkdownEditor.css";
 
 interface MilkdownEditorProps {
   yText: Y.Text | null;
   onUpdate?: (markdown: string) => void;
+}
+
+export interface MilkdownEditorRef {
+  focusEnd: () => void;
 }
 
 // Custom plugin to exit code blocks with down arrow
@@ -71,6 +76,7 @@ const exitCodeBlockPlugin = $prose(() => {
         const paragraph = state.schema.nodes.paragraph.create();
         tr.insert(codeBlockEnd, paragraph);
         tr.setSelection(Selection.near(tr.doc.resolve(codeBlockEnd + 1)));
+        tr.scrollIntoView();
         dispatch(tr);
 
         return true;
@@ -79,10 +85,10 @@ const exitCodeBlockPlugin = $prose(() => {
   });
 });
 
-const MilkdownEditorInner: React.FC<MilkdownEditorProps> = ({
+const MilkdownEditorInner = forwardRef<MilkdownEditorRef, MilkdownEditorProps>(({
   yText,
   onUpdate,
-}) => {
+}, ref) => {
   const { loading, get } = useEditor((root: HTMLElement) => {
     if (!root) return;
 
@@ -102,6 +108,8 @@ const MilkdownEditorInner: React.FC<MilkdownEditorProps> = ({
       .use(history)
       .use(listener)
       .use(collab)
+      .use(codeBlockView)
+      .use(jsonCodeBlockInputRule)
       .use(exitCodeBlockPlugin);
 
     return editor;
@@ -124,17 +132,33 @@ const MilkdownEditorInner: React.FC<MilkdownEditorProps> = ({
     }
   }, [loading, yText, get]);
 
+  // Expose focusEnd method to parent components
+  useImperativeHandle(ref, () => ({
+    focusEnd: () => {
+      const editor = get();
+      if (editor && !loading) {
+        editor.action((ctx: Ctx) => {
+          const view = ctx.get(editorViewCtx);
+          const { state } = view;
+          const tr = state.tr.setSelection(Selection.atEnd(state.doc));
+          view.dispatch(tr);
+          view.focus();
+        });
+      }
+    },
+  }), [get, loading]);
+
   return (
     <div className="milkdown-wrapper">
       <Milkdown />
     </div>
   );
-};
+});
 
-export const MilkdownEditor: React.FC<MilkdownEditorProps> = (props) => {
+export const MilkdownEditor = forwardRef<MilkdownEditorRef, MilkdownEditorProps>((props, ref) => {
   return (
     <MilkdownProvider>
-      <MilkdownEditorInner {...props} />
+      <MilkdownEditorInner {...props} ref={ref} />
     </MilkdownProvider>
   );
-};
+});

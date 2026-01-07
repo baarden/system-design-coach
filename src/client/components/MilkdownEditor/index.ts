@@ -1,1 +1,1 @@
-export { MilkdownEditor } from "./MilkdownEditor";
+export { MilkdownEditor, type MilkdownEditorRef } from "./MilkdownEditor";

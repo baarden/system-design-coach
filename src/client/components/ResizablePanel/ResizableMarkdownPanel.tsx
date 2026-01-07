@@ -1,8 +1,8 @@
-import { ReactNode, RefObject } from "react";
+import { ReactNode, RefObject, useRef } from "react";
 import { Box, Typography, useTheme, Select, MenuItem } from "@mui/material";
 import ReactMarkdown from "react-markdown";
 import type * as Y from "yjs";
-import { MilkdownEditor } from "../MilkdownEditor";
+import { MilkdownEditor, type MilkdownEditorRef } from "../MilkdownEditor";
 
 interface StepInfo {
   stepNumber: number;
@@ -68,6 +68,7 @@ export function ResizableMarkdownPanel({
 }: ResizableMarkdownPanelProps) {
   const theme = useTheme();
   const showDropdown = steps && totalSteps !== undefined && totalSteps > 0 && onStepSelect;
+  const editorRef = useRef<MilkdownEditorRef>(null);
 
   const bgColor = theme.palette.background.paper;
 
@@ -80,6 +81,20 @@ export function ResizableMarkdownPanel({
     fontSize: { xs: "0.875rem", sm: "1rem" },
     // Let CSS classes (markdown.css, MilkdownEditor.css) control line-height and spacing
     // to ensure consistency between ReactMarkdown and Milkdown editor
+  };
+
+  const handleContentBoxClick = (e: React.MouseEvent) => {
+    // Only focus editor if it's editable and click was on empty space (not on content)
+    if (!editable || !editorRef.current) return;
+
+    const target = e.target as HTMLElement;
+    const contentBox = e.currentTarget as HTMLElement;
+
+    // Check if click was on the content box itself or the markdown-content div,
+    // but not on actual editor elements
+    if (target === contentBox || target.classList.contains('markdown-content')) {
+      editorRef.current.focusEnd();
+    }
   };
 
   return (
@@ -159,10 +174,10 @@ export function ResizableMarkdownPanel({
       )}
 
       {/* Content area */}
-      <Box ref={scrollRef} sx={markdownStyles}>
+      <Box ref={scrollRef} sx={markdownStyles} onClick={handleContentBoxClick}>
         <div className="markdown-content">
           {editable && yText ? (
-            <MilkdownEditor yText={yText} onUpdate={onContentChange} />
+            <MilkdownEditor ref={editorRef} yText={yText} onUpdate={onContentChange} />
           ) : (
             <ReactMarkdown>{content}</ReactMarkdown>
           )}
