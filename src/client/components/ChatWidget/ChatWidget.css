@@ -20,7 +20,12 @@
 
 /* Space between message bubbles */
 .cs-message {
-  margin-bottom: 0.75em !important;
+  margin-bottom: 0.75rem !important;
+}
+
+/* Message content font size */
+.cs-message__content {
+  font-size: 0.75rem !important;
 }
 
 /* Incoming messages (bot) - left aligned */
@@ -76,6 +81,7 @@
 .cs-message-input__content-editor {
   background-color: transparent !important;
   color: #333;
+  font-size: 0.75rem !important;
 }
 
 [data-theme="dark"] .cs-message-input__content-editor {
@@ -132,10 +138,57 @@
   line-height: inherit !important;
 }
 
-/* Additional specificity for chatscope message content */
-.cs-message__custom-content .markdown-content ul li,
-.cs-message__custom-content .markdown-content ol li {
+.cs-message__custom-content .markdown-content {
+  font-size: 0 !important;
+}
+
+/* Comprehensive spacing for chatscope markdown content */
+.cs-message__custom-content .markdown-content p,
+.cs-message__custom-content .markdown-content ul,
+.cs-message__custom-content .markdown-content ol {
   margin: 0 !important;
   padding: 0 !important;
   line-height: 1.35 !important;
+  font-size: 0.75rem !important;
+}
+
+/* Small gap between paragraphs only */
+.cs-message__custom-content .markdown-content p + p {
+  margin-top: 0.375rem !important;
+}
+
+/* Add same gap for lists after any element */
+.cs-message__custom-content .markdown-content p + ul,
+.cs-message__custom-content .markdown-content p + ol,
+.cs-message__custom-content .markdown-content ul + ul,
+.cs-message__custom-content .markdown-content ul + ol,
+.cs-message__custom-content .markdown-content ol + ul,
+.cs-message__custom-content .markdown-content ol + ol {
+  margin-top: 0.375rem !important;
+}
+
+/* Lists after paragraphs */
+.cs-message__custom-content .markdown-content ul + p,
+.cs-message__custom-content .markdown-content ol + p {
+  margin-top: 0.375rem !important;
+}
+
+.cs-message__custom-content .markdown-content ul,
+.cs-message__custom-content .markdown-content ol {
+  padding-left: 1.2rem !important;
+  font-size: 0 !important;
+}
+
+.cs-message__custom-content .markdown-content ul li,
+.cs-message__custom-content .markdown-content ol li,
+.cs-message__custom-content .markdown-content li {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.35 !important;
+  font-size: 0.75rem !important;
+}
+
+/* Handle paragraphs inside list items */
+.cs-message__custom-content .markdown-content li p {
+  margin: 0 !important;
 }

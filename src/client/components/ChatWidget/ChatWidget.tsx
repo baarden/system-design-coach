@@ -222,12 +222,13 @@ export default function ChatWidget({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            p: 1.5,
+            px: 1.5,
+            py: 1,
             backgroundColor: "primary.main",
             color: "white",
           }}
         >
-          <Box sx={{ fontWeight: 600 }}>System Design Assistant</Box>
+          <Box sx={{ fontWeight: 600, fontSize: '14px' }}>System Design Assistant</Box>
           <IconButton
             size="small"
             onClick={() => setIsOpen(false)}

@@ -19,6 +19,7 @@ export interface SimplifiedElement {
   id: string;
   type: string;
   label?: string;
+  iconName?: string;
   frameId?: string | null;
   connections_to?: {
     target_id: string;
