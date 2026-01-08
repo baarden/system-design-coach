@@ -10,6 +10,7 @@ interface SimplifiedElement {
   id: string;
   type: string;
   label?: string;
+  iconName?: string;
   frameId?: string | null;
   connections_to?: Connection[];
 }
@@ -166,6 +167,14 @@ export function filterElementsForClaude(
       elType === "frame" ? el.name : labelByElementId.get(el.id);
     if (label) {
       simplified.label = label;
+    }
+
+    // Add iconName from customData if present
+    if (el.customData && typeof el.customData === 'object' && 'iconName' in el.customData) {
+      const iconName = el.customData.iconName;
+      if (typeof iconName === 'string') {
+        simplified.iconName = iconName;
+      }
     }
 
     if (el.frameId) {

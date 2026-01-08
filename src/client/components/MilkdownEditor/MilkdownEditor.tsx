@@ -149,7 +149,7 @@ const MilkdownEditorInner = forwardRef<MilkdownEditorRef, MilkdownEditorProps>((
   }), [get, loading]);
 
   return (
-    <div className="milkdown-wrapper">
+    <div className="milkdown-wrapper" data-testid="milkdown-editor">
       <Milkdown />
     </div>
   );

@@ -12,6 +12,7 @@ import {
 import type * as Y from "yjs";
 import type { ServerElement, ExcalidrawMessage } from "@shared/types/excalidraw";
 import { useYjsElements } from "../../hooks/useYjsElements";
+import coachLibrary from "../../assets/coach.excalidrawlib";
 
 // Local type definitions for Excalidraw types that aren't cleanly exported
 interface ExcalidrawElement {
@@ -30,6 +31,7 @@ export interface ExcalidrawImperativeAPI {
   }) => void;
   getSceneElements: () => readonly ExcalidrawElement[];
   addFiles: (files: { id: string; mimeType: string; dataURL: string; created: number }[]) => void;
+  updateLibrary: (opts: { libraryItems: unknown[]; merge?: boolean }) => Promise<unknown>;
 }
 
 interface ApiResponse {
@@ -479,6 +481,16 @@ export function ExcalidrawClient(
 
     mountedRef.current = true;
     connectWebSocket();
+
+    // Load coach library on startup
+    if (coachLibrary?.libraryItems) {
+      excalidrawAPI.updateLibrary({
+        libraryItems: coachLibrary.libraryItems,
+        merge: true,
+      }).catch((error) => {
+        console.error("Failed to load coach library:", error);
+      });
+    }
 
     return () => {
       mountedRef.current = false;

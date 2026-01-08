@@ -233,5 +233,47 @@ describe("elementFilters", () => {
       const rect1 = result.find((e) => e.id === "rect1");
       expect(rect1?.connections_to).toBeUndefined();
     });
+
+    it("includes iconName from customData when present", () => {
+      const elements = [
+        createElement({
+          id: "rect1",
+          type: "rectangle",
+          customData: { iconName: "database" },
+        }),
+      ];
+
+      const result = filterElementsForClaude(elements);
+
+      expect(result[0].iconName).toBe("database");
+    });
+
+    it("omits iconName when customData is null", () => {
+      const elements = [
+        createElement({
+          id: "rect1",
+          type: "rectangle",
+          customData: null,
+        }),
+      ];
+
+      const result = filterElementsForClaude(elements);
+
+      expect(result[0]).not.toHaveProperty("iconName");
+    });
+
+    it("omits iconName when not a string", () => {
+      const elements = [
+        createElement({
+          id: "rect1",
+          type: "rectangle",
+          customData: { iconName: 123 },
+        } as any),
+      ];
+
+      const result = filterElementsForClaude(elements);
+
+      expect(result[0]).not.toHaveProperty("iconName");
+    });
   });
 });

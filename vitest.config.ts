@@ -6,8 +6,21 @@ import { dirname, resolve } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Plugin to handle .excalidrawlib files as JSON
+const excalidrawLibPlugin = () => ({
+  name: 'excalidrawlib-loader',
+  transform(src: string, id: string) {
+    if (id.endsWith('.excalidrawlib')) {
+      return {
+        code: `export default ${src}`,
+        map: null,
+      };
+    }
+  },
+});
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), excalidrawLibPlugin()],
   test: {
     globals: true,
     projects: [
