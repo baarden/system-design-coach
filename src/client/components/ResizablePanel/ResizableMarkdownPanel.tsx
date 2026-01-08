@@ -78,7 +78,7 @@ export function ResizableMarkdownPanel({
     px: 2,
     pt: '10px',
     pb: 0,
-    fontSize: { xs: "0.875rem", sm: "1rem" },
+    fontSize: "0.75rem",
     // Let CSS classes (markdown.css, MilkdownEditor.css) control line-height and spacing
     // to ensure consistency between ReactMarkdown and Milkdown editor
   };
