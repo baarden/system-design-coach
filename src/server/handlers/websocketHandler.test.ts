@@ -12,6 +12,17 @@ import { ChatService } from "../services/ChatService.js";
 import { createTestProblemRepository } from "../repositories/ProblemRepository.js";
 import type { AIClient } from "../services/ai/types.js";
 import type { UsageProvider } from "../providers/usage/types.js";
+import { logger } from "../utils/logger.js";
+
+// Mock logger
+vi.mock("../utils/logger.js", () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
 
 // Mock WebSocket
 function createMockWebSocket(): WebSocket {
@@ -68,6 +79,8 @@ describe("websocketHandler", () => {
   let chatService: ChatService;
 
   beforeEach(() => {
+    vi.clearAllMocks();
+
     wss = createMockWSS();
     stateManager = new MultiRoomStateManager();
     clientManager = new MultiRoomClientManager();
@@ -141,17 +154,22 @@ describe("websocketHandler", () => {
     });
 
     it("closes connection if roomId is missing", async () => {
-      vi.spyOn(console, "error").mockImplementation(() => {});
-
       const ws = createMockWebSocket();
       const req = createMockRequest("/invalid-url", {});
 
       wss.emit("connection", ws, req);
       await new Promise((r) => setTimeout(r, 10));
 
+      // Verify connection is rejected with correct code and message
       expect(ws.close).toHaveBeenCalledWith(
         1008,
         "Invalid room URL or unauthorized"
+      );
+
+      // Verify rejection is logged for monitoring
+      expect(logger.warn).toHaveBeenCalledWith(
+        "WebSocket connection rejected",
+        { reason: "invalid URL or unauthorized" }
       );
     });
 

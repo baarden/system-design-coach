@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import type { RoomRegistry } from '../registries/types.js';
 import type { AsyncStateManager } from '../managers/types.js';
 import type { YjsDocManager } from '../managers/YjsDocManager.js';
+import type { RoomResponse, TokenRegenerateResponse, ResetRoomResponse } from '@shared/types/api';
 import { logger } from '../utils/logger.js';
 
 interface RoomRoutesDependencies {
@@ -23,25 +24,28 @@ export function createRoomRoutes(deps: RoomRoutesDependencies): Router {
 
       const metadata = await roomRegistry.getRoomByToken(token);
       if (!metadata) {
-        return res.status(404).json({
+        const response: RoomResponse = {
           success: false,
           error: 'Invalid or expired share link',
-        });
+        };
+        return res.status(404).json(response);
       }
 
-      res.json({
+      const response: RoomResponse = {
         success: true,
         room: {
           roomId: metadata.roomId,
           problemId: metadata.problemId,
         },
-      });
+      };
+      res.json(response);
     } catch (error) {
       logger.error('Error resolving token', { error: (error as Error).message });
-      res.status(500).json({
+      const response: RoomResponse = {
         success: false,
         error: (error as Error).message,
-      });
+      };
+      res.status(500).json(response);
     }
   });
 
@@ -53,15 +57,16 @@ export function createRoomRoutes(deps: RoomRoutesDependencies): Router {
 
       const metadata = await roomRegistry.getRoomMetadata(roomId);
       if (!metadata) {
-        return res.status(404).json({
+        const response: RoomResponse = {
           success: false,
           error: 'Room not found',
-        });
+        };
+        return res.status(404).json(response);
       }
 
       const shareUrl = `${getBaseUrl()}/room/${metadata.shareToken}`;
 
-      res.json({
+      const response: RoomResponse = {
         success: true,
         room: {
           roomId: metadata.roomId,
@@ -70,13 +75,15 @@ export function createRoomRoutes(deps: RoomRoutesDependencies): Router {
           createdAt: metadata.createdAt,
           tokenCreatedAt: metadata.tokenCreatedAt,
         },
-      });
+      };
+      res.json(response);
     } catch (error) {
       logger.error('Error getting room', { error: (error as Error).message });
-      res.status(500).json({
+      const response: RoomResponse = {
         success: false,
         error: (error as Error).message,
-      });
+      };
+      res.status(500).json(response);
     }
   });
 
@@ -88,20 +95,23 @@ export function createRoomRoutes(deps: RoomRoutesDependencies): Router {
       const metadata = await roomRegistry.createRoom(user, problemId);
       const shareUrl = `${getBaseUrl()}/room/${metadata.shareToken}`;
 
-      res.json({
+      const response: RoomResponse = {
         success: true,
         room: {
           roomId: metadata.roomId,
+          problemId: metadata.problemId,
           shareUrl,
           createdAt: metadata.createdAt,
         },
-      });
+      };
+      res.json(response);
     } catch (error) {
       logger.error('Error creating room', { error: (error as Error).message });
-      res.status(500).json({
+      const response: RoomResponse = {
         success: false,
         error: (error as Error).message,
-      });
+      };
+      res.status(500).json(response);
     }
   });
 
@@ -114,17 +124,19 @@ export function createRoomRoutes(deps: RoomRoutesDependencies): Router {
       const newToken = await roomRegistry.regenerateToken(roomId, user);
       const shareUrl = `${getBaseUrl()}/room/${newToken}`;
 
-      res.json({
+      const response: TokenRegenerateResponse = {
         success: true,
         shareUrl,
         message: 'Token regenerated. Old share links are now invalid.',
-      });
+      };
+      res.json(response);
     } catch (error) {
       logger.error('Error regenerating token', { error: (error as Error).message });
-      res.status(500).json({
+      const response: TokenRegenerateResponse = {
         success: false,
         error: (error as Error).message,
-      });
+      };
+      res.status(500).json(response);
     }
   });
 
@@ -142,16 +154,18 @@ export function createRoomRoutes(deps: RoomRoutesDependencies): Router {
 
       logger.info('Room content reset', { roomId });
 
-      res.json({
+      const response: ResetRoomResponse = {
         success: true,
         message: 'Room content has been reset',
-      });
+      };
+      res.json(response);
     } catch (error) {
       logger.error('Error resetting room', { error: (error as Error).message });
-      res.status(500).json({
+      const response: ResetRoomResponse = {
         success: false,
         error: (error as Error).message,
-      });
+      };
+      res.status(500).json(response);
     }
   });
 

@@ -173,6 +173,15 @@ function DesignPageContent({
     currentComments: yjsComments,
   });
 
+  // When step is selected from Coach Comments dropdown, also activate the Coach Comments tab
+  const handleCoachStepSelect = useCallback((stepNumber: number) => {
+    selectStep(stepNumber);
+    // Only activate feedback tab if it's enabled (not step 1)
+    if (stepNumber !== 1) {
+      setActiveCoachTab('feedback');
+    }
+  }, [selectStep, setActiveCoachTab]);
+
   // Reset to current step after submit
   const handleResetAfterSubmit = useCallback(() => {
     resetAfterSubmit(submittedCommentsRef.current);
@@ -409,7 +418,7 @@ function DesignPageContent({
             totalSteps={totalRounds}
             currentStep={isViewingCurrent ? totalRounds : viewingStepNumber!}
             isViewingLatest={isViewingCurrent}
-            onStepSelect={selectStep}
+            onStepSelect={handleCoachStepSelect}
           />
         </Box>
         <ResizeDivider

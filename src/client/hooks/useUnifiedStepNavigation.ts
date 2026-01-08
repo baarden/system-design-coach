@@ -92,7 +92,11 @@ export function useUnifiedStepNavigation({
   }, [feedbackContent, problemContent]);
 
   const originalProblemStatement = problemSteps[0]?.content ?? '';
-  const isFeedbackTabEnabled = feedbackSteps.length > 0;
+
+  // Feedback tab should only be enabled if:
+  // 1. There is feedback available AND
+  // 2. We're not viewing step 1 (which has no feedback)
+  const isFeedbackTabEnabled = feedbackSteps.length > 0 && viewingStepNumber !== 1;
 
   // Auto-switch to feedback tab when first feedback arrives (only once)
   useEffect(() => {
@@ -101,6 +105,13 @@ export function useUnifiedStepNavigation({
       hasAutoSwitchedRef.current = true;
     }
   }, [feedbackSteps.length]);
+
+  // When viewing step 1, force switch to problem tab (step 1 has no feedback)
+  useEffect(() => {
+    if (viewingStepNumber === 1) {
+      setActiveTab('problem');
+    }
+  }, [viewingStepNumber]);
 
   // Unified step selector
   const selectStep = useCallback((stepNumber: number) => {

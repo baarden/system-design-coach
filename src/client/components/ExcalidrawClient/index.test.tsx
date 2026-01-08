@@ -2,6 +2,28 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, waitFor } from "@testing-library/react";
 import * as Y from "yjs";
 import type { FC } from "react";
+import { suppressConsoleErrors } from "../../test/muiTestUtils";
+
+// Mock WebSocket to prevent actual connections in tests
+class MockWebSocket {
+  readyState = 1; // OPEN
+  onopen: (() => void) | null = null;
+  onclose: ((event: CloseEvent) => void) | null = null;
+  onerror: ((event: Event) => void) | null = null;
+  onmessage: ((event: MessageEvent) => void) | null = null;
+
+  constructor(public url: string) {
+    // Simulate async connection
+    setTimeout(() => {
+      if (this.onopen) this.onopen();
+    }, 0);
+  }
+
+  send() {}
+  close() {}
+}
+
+global.WebSocket = MockWebSocket as unknown as typeof WebSocket;
 
 // Mock the coach library import
 vi.mock("../../assets/coach.excalidrawlib", () => ({
@@ -51,6 +73,10 @@ vi.mock("@excalidraw/excalidraw", () => {
 import { ExcalidrawClient } from "./index";
 
 describe("ExcalidrawClient", () => {
+  // Suppress MUI warnings, WebSocket connection errors, and MSW unhandled request warnings
+  // (not testing network behavior - component correctly attempts connection in test isolation)
+  suppressConsoleErrors(['WebSocket', '[MSW]']);
+
   beforeEach(() => {
     vi.clearAllMocks();
   });

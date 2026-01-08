@@ -9,4 +9,4 @@ export {
   regenerateToken,
   resetRoomContent,
 } from "./client";
-export type { RoomResponse, ResetRoomResponse } from "./client";
+export type { RoomResponse, ResetRoomResponse, TokenRegenerateResponse } from "@shared/types/api";

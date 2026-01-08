@@ -7,6 +7,9 @@ import type {
   ProblemsListResponse,
   ProblemDetailResponse,
   HealthResponse,
+  RoomResponse,
+  TokenRegenerateResponse,
+  ResetRoomResponse,
 } from "@shared/types/api";
 
 // Server URL from environment, or empty string for relative URLs (same origin)
@@ -40,32 +43,6 @@ export async function fetchProblem(
 export async function fetchHealth(): Promise<HealthResponse> {
   const response = await fetch(`${getServerUrl()}/api/health`);
   return response.json();
-}
-
-// Room API types
-export interface RoomResponse {
-  success: boolean;
-  room?: {
-    roomId: string;
-    shareUrl?: string;
-    problemId: string;
-    createdAt?: string;
-    tokenCreatedAt?: string;
-  };
-  error?: string;
-}
-
-export interface TokenRegenerateResponse {
-  success: boolean;
-  shareUrl?: string;
-  message?: string;
-  error?: string;
-}
-
-export interface ResetRoomResponse {
-  success: boolean;
-  message?: string;
-  error?: string;
 }
 
 /**

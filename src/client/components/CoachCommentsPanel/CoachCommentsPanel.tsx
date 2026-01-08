@@ -1,8 +1,8 @@
 import { RefObject } from "react";
 import { Box, Tabs, Tab, Select, MenuItem } from "@mui/material";
-import { ResizableMarkdownPanel } from "./ResizablePanel";
-import type { CoachTab } from "../hooks/useUnifiedStepNavigation";
-import type { FeedbackStep } from "../hooks/useClaudeFeedbackSteps";
+import { ResizableMarkdownPanel } from "../ResizablePanel";
+import type { CoachTab } from "../../hooks/useUnifiedStepNavigation";
+import type { FeedbackStep } from "../../hooks/useClaudeFeedbackSteps";
 
 interface CoachCommentsPanelProps {
   // Tab state
@@ -57,10 +57,12 @@ export function CoachCommentsPanel({
   isViewingLatest,
   onStepSelect,
 }: CoachCommentsPanelProps) {
-  // Show steps dropdown only when totalRounds >= 3
+  // Show steps dropdown only when totalRounds >= 3 and not viewing step 1
+  // (step 1 has no coach feedback, so dropdown shouldn't appear)
   const showStepsDropdown =
     totalSteps !== undefined &&
     totalSteps >= 3 &&
+    currentStep !== 1 &&
     steps !== undefined &&
     steps.length > 0 &&
     onStepSelect !== undefined;
@@ -111,12 +113,13 @@ export function CoachCommentsPanel({
           },
         }}
       >
-        {steps!.map((step) => (
+        {steps && steps.filter((step) => step.stepNumber >= 2).map((step) => (
           <MenuItem key={step.stepNumber} value={step.stepNumber} sx={{ fontSize: '0.875rem' }}>
             Step {step.stepNumber}
           </MenuItem>
         ))}
-        {steps!.length > 0 && steps!.length < totalSteps! && (
+        {/* Add current step if it's not in the filtered historical steps */}
+        {steps && totalSteps && totalSteps > Math.max(...steps.filter((step) => step.stepNumber >= 2).map(s => s.stepNumber), 1) && totalSteps >= 2 && (
           <MenuItem key="current" value={totalSteps} sx={{ fontSize: '0.875rem' }}>
             Step {totalSteps}
           </MenuItem>

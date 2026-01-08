@@ -1,7 +1,19 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 import { getAvailableLanguages, findLanguageByName, loadLanguage } from "./languageLoader";
 
 describe("languageLoader", () => {
+  let mockWarn: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    // Spy on console.warn to capture calls while suppressing output
+    mockWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    // Restore original console.warn
+    vi.restoreAllMocks();
+  });
+
   describe("getAvailableLanguages", () => {
     it("returns a non-empty array of languages", () => {
       const languages = getAvailableLanguages();
@@ -104,13 +116,24 @@ describe("languageLoader", () => {
 
     it("returns null for empty string", async () => {
       const result = await loadLanguage("");
+
+      // Verify graceful degradation: returns null
       expect(result).toBeNull();
+
+      // Verify no warning is logged for empty string (intentional no-op)
+      expect(mockWarn).not.toHaveBeenCalled();
     });
 
     it("returns null for unknown language", async () => {
-      // Should log warning but not throw
       const result = await loadLanguage("nonexistent-language-xyz");
+
+      // Verify graceful degradation: returns null
       expect(result).toBeNull();
+
+      // Verify warning is logged for debugging
+      expect(mockWarn).toHaveBeenCalledWith(
+        'Language "nonexistent-language-xyz" is not supported'
+      );
     });
 
     it("loads JavaScript language support via CDN", async () => {

@@ -2,10 +2,10 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import LandingPage from "../LandingPage";
+import LandingPage from "./LandingPage";
 
 // Mock the auth provider
-vi.mock("../providers/auth", () => ({
+vi.mock("./providers/auth", () => ({
   useAuth: () => ({
     isSignedIn: true,
     userId: "test-user",
@@ -17,7 +17,7 @@ vi.mock("../providers/auth", () => ({
 }));
 
 // Mock the theme provider
-vi.mock("../providers/theme", () => ({
+vi.mock("./providers/theme", () => ({
   useTheme: () => ({
     mode: "light",
     toggleTheme: vi.fn(),

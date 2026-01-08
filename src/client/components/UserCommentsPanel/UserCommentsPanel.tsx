@@ -1,8 +1,8 @@
 import { Box, Select, MenuItem } from "@mui/material";
 import type * as Y from "yjs";
-import type { CommentStep } from "../hooks";
-import { useScrollFade } from "../hooks";
-import { ResizableMarkdownPanel } from "./ResizablePanel/ResizableMarkdownPanel";
+import type { CommentStep } from "../../hooks";
+import { useScrollFade } from "../../hooks";
+import { ResizableMarkdownPanel } from "../ResizablePanel/ResizableMarkdownPanel";
 
 interface UserCommentsPanelProps {
   content: string;
@@ -65,6 +65,7 @@ export function UserCommentsPanel({
           value={isViewingLatest ? totalSteps : currentStep}
           onChange={(e) => onStepSelect(Number(e.target.value))}
           variant="standard"
+          data-testid="comment-step-selector"
           sx={{
             position: "absolute",
             top: -9,

@@ -49,3 +49,32 @@ export interface HealthResponse {
     connected: boolean;
   };
 }
+
+// ============================================
+// Room Types
+// ============================================
+
+export interface RoomResponse {
+  success: boolean;
+  room?: {
+    roomId: string;
+    shareUrl?: string;
+    problemId: string;
+    createdAt?: string;
+    tokenCreatedAt?: string;
+  };
+  error?: string;
+}
+
+export interface TokenRegenerateResponse {
+  success: boolean;
+  shareUrl?: string;
+  message?: string;
+  error?: string;
+}
+
+export interface ResetRoomResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+}

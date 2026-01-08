@@ -1,0 +1,1 @@
+export { CoachCommentsPanel } from './CoachCommentsPanel';
