@@ -1,5 +1,5 @@
 import { RefObject } from "react";
-import { Box, Tabs, Tab, Select, MenuItem } from "@mui/material";
+import { Box, Tabs, Tab, Select, MenuItem, useTheme } from "@mui/material";
 import { ResizableMarkdownPanel } from "../ResizablePanel";
 import type { CoachTab } from "../../hooks/useUnifiedStepNavigation";
 import type { FeedbackStep } from "../../hooks/useClaudeFeedbackSteps";
@@ -27,21 +27,6 @@ interface CoachCommentsPanelProps {
   onStepSelect?: (step: number) => void;
 }
 
-const tabStyles = {
-  fontSize: { xs: '0.75rem', sm: '0.875rem' },
-  minHeight: { xs: 28, sm: 32 },
-  py: { xs: 0.5, sm: 1 },
-  px: { xs: 1.5, sm: 2.5 },
-  textTransform: 'none',
-  fontWeight: 500,
-  '&.Mui-selected': {
-    fontWeight: 600,
-  },
-  '&.Mui-disabled': {
-    opacity: 0.5,
-  },
-};
-
 export function CoachCommentsPanel({
   activeTab,
   onTabChange,
@@ -57,6 +42,28 @@ export function CoachCommentsPanel({
   isViewingLatest,
   onStepSelect,
 }: CoachCommentsPanelProps) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  const tabStyles = {
+    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+    minHeight: { xs: 28, sm: 32 },
+    py: { xs: 0.5, sm: 1 },
+    px: { xs: 1.5, sm: 2.5 },
+    textTransform: 'none' as const,
+    fontWeight: 500,
+    color: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'transparent',
+    '&.Mui-selected': {
+      fontWeight: 600,
+      color: isDark ? '#ffffff' : '#1976d2',
+      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(25, 118, 210, 0.08)',
+    },
+    '&.Mui-disabled': {
+      opacity: 0.5,
+    },
+  };
+
   // Show steps dropdown only when totalRounds >= 3 and not viewing step 1
   // (step 1 has no coach feedback, so dropdown shouldn't appear)
   const showStepsDropdown =
@@ -146,6 +153,7 @@ export function CoachCommentsPanel({
             borderColor: 'divider',
             '& .MuiTabs-indicator': {
               backgroundColor: 'primary.main',
+              height: 3,
             },
           }}
         >
