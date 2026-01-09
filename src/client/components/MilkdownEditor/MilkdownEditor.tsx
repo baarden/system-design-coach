@@ -140,7 +140,15 @@ const MilkdownEditorInner = forwardRef<MilkdownEditorRef, MilkdownEditorProps>((
         editor.action((ctx: Ctx) => {
           const view = ctx.get(editorViewCtx);
           const { state } = view;
-          const tr = state.tr.setSelection(Selection.atEnd(state.doc));
+          let tr = state.tr;
+
+          // Ensure there's at least one paragraph for Firefox cursor visibility
+          if (state.doc.childCount === 0 || (state.doc.childCount === 1 && state.doc.firstChild!.nodeSize === 2)) {
+            const paragraph = state.schema.nodes.paragraph.create();
+            tr = tr.replaceWith(0, state.doc.content.size, paragraph);
+          }
+
+          tr = tr.setSelection(Selection.atEnd(tr.doc));
           view.dispatch(tr);
           view.focus();
         });

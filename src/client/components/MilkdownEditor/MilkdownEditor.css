@@ -10,11 +10,18 @@
 .ProseMirror {
   white-space: pre-wrap;
   word-wrap: break-word;
+  min-height: 1.35em;
 }
 
 /* Remove outline from ProseMirror */
 .ProseMirror {
   outline: none;
+}
+
+/* Ensure empty paragraphs have height for Firefox cursor */
+.ProseMirror p:empty::before {
+  content: '\200B'; /* Zero-width space */
+  display: inline;
 }
 
 /* Ensure placeholder doesn't interfere with clicks */
@@ -28,11 +35,9 @@
   margin: 0 !important;
 }
 
-/* Make trailing break not contribute to height while keeping it for cursor positioning */
+/* Make trailing break minimal but visible for Firefox cursor */
 .ProseMirror-trailingBreak {
-  height: 0 !important;
-  line-height: 0 !important;
-  font-size: 0 !important;
+  display: inline;
   margin: 0 !important;
   padding: 0 !important;
 }
