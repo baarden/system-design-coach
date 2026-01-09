@@ -151,10 +151,20 @@ if (process.env.NODE_ENV === "production") {
     })
   );
 
-  // Other static files with short cache
-  app.use(express.static(clientPath, { maxAge: "1h" }));
+  // Other static files - HTML files should never be cached, others get short cache
+  app.use(
+    express.static(clientPath, {
+      maxAge: "1h",
+      setHeaders: (res, filePath) => {
+        // Never cache HTML files (especially index.html)
+        if (filePath.endsWith(".html")) {
+          res.set("Cache-Control", "no-cache, no-store, must-revalidate");
+        }
+      },
+    })
+  );
 
-  // SPA fallback - index.html should never be cached
+  // SPA fallback for routes that don't match files
   app.get("*", (_req: Request, res: Response) => {
     res.set("Cache-Control", "no-cache, no-store, must-revalidate");
     res.sendFile(path.join(clientPath, "index.html"));
