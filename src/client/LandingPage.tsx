@@ -13,7 +13,8 @@ import {
   CardContent,
 } from "@mui/material";
 import { AppBar } from "./components/AppBar";
-import { fetchProblems } from "./api";
+import { CustomProblemDialog } from "./components/CustomProblemDialog";
+import { fetchProblems, createCustomRoom } from "./api";
 import type { Problem } from "@shared/types/api";
 import iconPng from "./assets/icon.png";
 import screenshotLightPng from "./assets/screenshot_light.png";
@@ -36,6 +37,7 @@ function LandingPage() {
   const { isSignedIn, userId, signIn, checkAvailability } = useAuth();
   const { mode } = useTheme();
   const [problems, setProblems] = useState<Problem[]>([]);
+  const [customDialogOpen, setCustomDialogOpen] = useState(false);
   const screenshotPng = mode === "dark" ? screenshotDarkPng : screenshotLightPng;
 
   // Fetch problems from server on mount
@@ -63,6 +65,35 @@ function LandingPage() {
     }
 
     navigate(`/${userId}/${problemId}`);
+  };
+
+  const handleCustomExerciseClick = async () => {
+    if (!isSignedIn) {
+      signIn();
+      return;
+    }
+
+    const available = await checkAvailability();
+    if (!available) {
+      return;
+    }
+
+    setCustomDialogOpen(true);
+  };
+
+  const handleCustomProblemSubmit = async (statement: string) => {
+    try {
+      const result = await createCustomRoom(userId!, statement);
+      if (result.success) {
+        setCustomDialogOpen(false);
+        navigate(`/${userId}/custom-exercise`);
+      } else {
+        throw new Error(result.error || 'Failed to create custom room');
+      }
+    } catch (error) {
+      console.error('Failed to create custom room:', error);
+      throw error;
+    }
   };
 
   return (
@@ -183,6 +214,7 @@ function LandingPage() {
                           p: 2,
                           display: "flex",
                           alignItems: "flex-start",
+                          justifyContent: "flex-start",
                         }}
                       >
                         <CardContent>
@@ -203,7 +235,59 @@ function LandingPage() {
             </Box>
           )
         )}
+
+        {/* Self-directed Section */}
+        <Box sx={{ mb: 6 }}>
+          <Typography
+            variant="h4"
+            component="h2"
+            gutterBottom
+            sx={{ fontWeight: 600, mb: 3 }}
+          >
+            Self-directed
+          </Typography>
+          <Grid container spacing={3} justifyContent="flex-start">
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card
+                sx={{
+                  height: "100%",
+                  transition: "transform 0.2s, box-shadow 0.2s",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: 4,
+                  },
+                }}
+              >
+                <CardActionArea
+                  onClick={handleCustomExerciseClick}
+                  sx={{
+                    height: "100%",
+                    p: 2,
+                    display: "flex",
+                    alignItems: "flex-start",
+                    justifyContent: "flex-start",
+                  }}
+                >
+                  <CardContent>
+                    <Typography variant="h6" component="h3" gutterBottom>
+                      Add your own exercise
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Practice with your own system design problem
+                    </Typography>
+                  </CardContent>
+                </CardActionArea>
+              </Card>
+            </Grid>
+          </Grid>
+        </Box>
       </Container>
+
+      <CustomProblemDialog
+        open={customDialogOpen}
+        onClose={() => setCustomDialogOpen(false)}
+        onSubmit={handleCustomProblemSubmit}
+      />
     </Box>
   );
 }

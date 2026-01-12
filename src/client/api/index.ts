@@ -6,6 +6,7 @@ export {
   resolveToken,
   getRoom,
   createRoom,
+  createCustomRoom,
   regenerateToken,
   resetRoomContent,
 } from "./client";

@@ -3,6 +3,7 @@ import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import type { Problem } from "../types/conversation.js";
+import type { AsyncStateManager } from "../managers/types.js";
 import { logger } from "../utils/logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -18,7 +19,12 @@ function loadProblems(): ProblemsData {
   return JSON.parse(data);
 }
 
-export function createProblemRoutes(): Router {
+interface ProblemRoutesDependencies {
+  stateManager: AsyncStateManager;
+}
+
+export function createProblemRoutes(deps: ProblemRoutesDependencies): Router {
+  const { stateManager } = deps;
   const router = Router();
   const problemsData = loadProblems();
 
@@ -46,9 +52,28 @@ export function createProblemRoutes(): Router {
   });
 
   // Get a specific problem by ID (includes full statement)
-  router.get("/:problemId", (req: Request, res: Response) => {
+  router.get("/:problemId", async (req: Request, res: Response) => {
     try {
       const { problemId } = req.params;
+
+      // Handle custom exercise - fetch from conversation state
+      if (problemId === 'custom-exercise') {
+        // For custom exercises, we need to know which user to fetch from
+        // Since we don't have user ID in this route, we can't fetch the actual statement
+        // The real statement will come from WebSocket conversation_restore
+        const customProblem: Problem = {
+          id: 'custom-exercise',
+          category: 'Self-directed',
+          title: 'Custom Exercise',
+          description: 'Your own system design problem',
+          statement: '', // Empty statement - will be loaded via WebSocket
+        };
+        return res.json({
+          success: true,
+          problem: customProblem,
+        });
+      }
+
       const problem = problemsData.problems.find((p) => p.id === problemId);
 
       if (!problem) {

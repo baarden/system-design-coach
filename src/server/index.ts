@@ -130,7 +130,7 @@ app.get("/api/health", async (req: Request, res: Response) => {
 app.use(createElementRoutes({ stateManager, clientManager }));
 
 // Register problem routes
-app.use("/api/problems", createProblemRoutes());
+app.use("/api/problems", createProblemRoutes({ stateManager }));
 
 // Register room routes
 app.use(createRoomRoutes({ roomRegistry, stateManager, yjsDocManager, getBaseUrl }));

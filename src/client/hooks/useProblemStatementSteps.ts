@@ -120,15 +120,17 @@ export function useProblemStatementSteps(): UseProblemStatementStepsReturn {
 
   // Add next prompt (called when next-prompt message arrives)
   const addNextPrompt = useCallback((content: string) => {
-    const newStep: ProblemStatementStep = {
-      stepNumber: steps.length + 1,
-      content,
-      timestamp: new Date().toISOString(),
-    };
-    setSteps((prev) => [...prev, newStep]);
+    setSteps((prev) => {
+      const newStep: ProblemStatementStep = {
+        stepNumber: prev.length + 1,
+        content,
+        timestamp: new Date().toISOString(),
+      };
+      return [...prev, newStep];
+    });
     // Reset to view latest
     setCurrentStepIndex(-1);
-  }, [steps.length]);
+  }, []);
 
   return {
     steps,

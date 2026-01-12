@@ -1,15 +1,33 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import express, { Express } from "express";
 import request from "supertest";
 import { createProblemRoutes } from "./problemRoutes.js";
+import type { AsyncStateManager } from "../managers/types.js";
 
 describe("problemRoutes", () => {
   let app: Express;
+  let mockStateManager: AsyncStateManager;
 
   beforeEach(() => {
+    // Create mock state manager
+    mockStateManager = {
+      getConversation: vi.fn(),
+      initializeConversation: vi.fn(),
+      addMessage: vi.fn(),
+      getPreviousElements: vi.fn(),
+      setPreviousElements: vi.fn(),
+      setCurrentProblemStatement: vi.fn(),
+      clearConversation: vi.fn(),
+      getElements: vi.fn(),
+      setElements: vi.fn(),
+      deleteRoom: vi.fn(),
+      getRoomCount: vi.fn(),
+      getElementCount: vi.fn(),
+    } as unknown as AsyncStateManager;
+
     app = express();
     app.use(express.json());
-    app.use("/api/problems", createProblemRoutes());
+    app.use("/api/problems", createProblemRoutes({ stateManager: mockStateManager }));
   });
 
   describe("GET /api/problems/", () => {

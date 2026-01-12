@@ -78,3 +78,7 @@ export interface ResetRoomResponse {
   message?: string;
   error?: string;
 }
+
+export interface CreateCustomRoomRequest {
+  customStatement: string;
+}

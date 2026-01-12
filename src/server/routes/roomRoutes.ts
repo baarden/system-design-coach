@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import type { RoomRegistry } from '../registries/types.js';
 import type { AsyncStateManager } from '../managers/types.js';
 import type { YjsDocManager } from '../managers/YjsDocManager.js';
-import type { RoomResponse, TokenRegenerateResponse, ResetRoomResponse } from '@shared/types/api';
+import type { RoomResponse, TokenRegenerateResponse, ResetRoomResponse, CreateCustomRoomRequest } from '@shared/types/api';
 import { logger } from '../utils/logger.js';
 
 interface RoomRoutesDependencies {
@@ -79,6 +79,78 @@ export function createRoomRoutes(deps: RoomRoutesDependencies): Router {
       res.json(response);
     } catch (error) {
       logger.error('Error getting room', { error: (error as Error).message });
+      const response: RoomResponse = {
+        success: false,
+        error: (error as Error).message,
+      };
+      res.status(500).json(response);
+    }
+  });
+
+  // Create custom exercise room with user-provided problem statement
+  router.post('/api/rooms/:user/custom-exercise', async (req: Request, res: Response) => {
+    try {
+      const { user } = req.params;
+      const { customStatement }: CreateCustomRoomRequest = req.body;
+
+      // Validate custom statement
+      if (!customStatement || typeof customStatement !== 'string') {
+        const response: RoomResponse = {
+          success: false,
+          error: 'Custom statement is required',
+        };
+        return res.status(400).json(response);
+      }
+
+      const trimmedStatement = customStatement.trim();
+      if (trimmedStatement.length < 20) {
+        const response: RoomResponse = {
+          success: false,
+          error: 'Problem statement must be at least 20 characters',
+        };
+        return res.status(400).json(response);
+      }
+
+      if (trimmedStatement.length > 2000) {
+        const response: RoomResponse = {
+          success: false,
+          error: 'Problem statement must be no more than 2000 characters',
+        };
+        return res.status(400).json(response);
+      }
+
+      const problemId = 'custom-exercise';
+      const roomId = `${user}/${problemId}`;
+
+      // Create or get room
+      const metadata = await roomRegistry.createRoom(user, problemId);
+
+      // Clear any existing conversation state for custom-exercise before initializing
+      const existingConversation = await stateManager.getConversation(roomId);
+      if (existingConversation) {
+        await stateManager.clearConversation(roomId);
+      }
+
+      // Initialize conversation with custom statement
+      const conversationState = await stateManager.initializeConversation(roomId, problemId, trimmedStatement);
+
+      // Set current problem statement so it gets sent to client on WebSocket connect
+      await stateManager.setCurrentProblemStatement(roomId, trimmedStatement);
+
+      const shareUrl = `${getBaseUrl()}/room/${metadata.shareToken}`;
+
+      const response: RoomResponse = {
+        success: true,
+        room: {
+          roomId: metadata.roomId,
+          problemId: metadata.problemId,
+          shareUrl,
+          createdAt: metadata.createdAt,
+        },
+      };
+      res.json(response);
+    } catch (error) {
+      logger.error('Error creating custom room', { error: (error as Error).message });
       const response: RoomResponse = {
         success: false,
         error: (error as Error).message,

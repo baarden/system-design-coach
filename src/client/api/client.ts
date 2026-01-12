@@ -72,6 +72,24 @@ export async function createRoom(roomId: string): Promise<RoomResponse> {
 }
 
 /**
+ * Create a custom room with user-provided problem statement
+ */
+export async function createCustomRoom(
+  userId: string,
+  customStatement: string
+): Promise<RoomResponse> {
+  const response = await fetch(
+    `${getServerUrl()}/api/rooms/${userId}/custom-exercise`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ customStatement }),
+    }
+  );
+  return response.json();
+}
+
+/**
  * Regenerate share token
  */
 export async function regenerateToken(roomId: string): Promise<TokenRegenerateResponse> {

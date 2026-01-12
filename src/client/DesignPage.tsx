@@ -351,7 +351,9 @@ function DesignPageContent({
 
     fetchProblem(problemId)
       .then((data) => {
-        if (data.success && data.problem) {
+        if (data.success && data.problem && data.problem.statement) {
+          // Only set initial problem if statement is non-empty
+          // For custom exercises, statement comes from WebSocket
           setInitialProblem(data.problem.statement);
         }
       })
